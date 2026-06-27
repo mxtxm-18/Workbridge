@@ -1,14 +1,16 @@
 package main;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.sql.*;
 import java.util.UUID;
 
 public class Publicaciones extends JPanel {
 
-    private final Color COLOR_MENU   = Color.decode("#243A69");
-    private final Color COLOR_BLANCO = Color.WHITE;
+    private static final Color BEIGE     = new Color(0xD4, 0xCD, 0xC5);
+    private static final Color BG        = new Color(245, 247, 250);
+    private static final Color COLOR_MENU = Color.decode("#243A69");
 
     private JPanel panelPosts;
     private final WorkBridgeApp app;
@@ -16,41 +18,19 @@ public class Publicaciones extends JPanel {
     public Publicaciones(WorkBridgeApp app) {
         this.app = app;
         setLayout(new BorderLayout());
-        setBackground(new Color(245, 247, 250));
+        setBackground(BG);
         construirUI();
     }
 
     private void construirUI() {
         add(new SidebarAdmin(app, "publicaciones"), BorderLayout.WEST);
 
-        JPanel contenido = new JPanel(new BorderLayout());
-        contenido.setBackground(new Color(245, 247, 250));
-
-        JPanel norte = new JPanel(new BorderLayout());
-        norte.setBackground(new Color(245, 247, 250));
-
-        JLabel lblTitulo = new JLabel("Inicio");
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitulo.setBorder(BorderFactory.createEmptyBorder(15, 30, 5, 0));
-        norte.add(lblTitulo, BorderLayout.WEST);
-
-        JButton btnSalir = new JButton("Cerrar sesión");
-        btnSalir.setBackground(Color.decode("#243A69"));
-        btnSalir.setForeground(Color.WHITE);
-        btnSalir.setBorderPainted(false);
-        btnSalir.setFocusPainted(false);
-        btnSalir.setMargin(new Insets(5, 15, 5, 15));
-        btnSalir.addActionListener(e -> app.cerrarSesion());
-
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 10));
-        btnPanel.setOpaque(false);
-        btnPanel.add(btnSalir);
-        norte.add(btnPanel, BorderLayout.EAST);
-
-        contenido.add(norte, BorderLayout.NORTH);
+        JPanel derecho = new JPanel(new BorderLayout());
+        derecho.setBackground(BG);
+        derecho.add(crearTopBar("Publicaciones"), BorderLayout.NORTH);
 
         JPanel panelNuevo = new JPanel(null);
-        panelNuevo.setBackground(COLOR_BLANCO);
+        panelNuevo.setBackground(Color.WHITE);
         panelNuevo.setPreferredSize(new Dimension(0, 100));
 
         JTextArea taContenido = new JTextArea("¿Qué deseas compartir?");
@@ -62,14 +42,14 @@ public class Publicaciones extends JPanel {
         JButton btnPublicar = new JButton("Publicar");
         btnPublicar.setBounds(730, 10, 100, 50);
         btnPublicar.setBackground(COLOR_MENU);
-        btnPublicar.setForeground(COLOR_BLANCO);
+        btnPublicar.setForeground(Color.WHITE);
         btnPublicar.setBorderPainted(false);
         btnPublicar.setFocusPainted(false);
         panelNuevo.add(btnPublicar);
 
         panelPosts = new JPanel();
         panelPosts.setLayout(new BoxLayout(panelPosts, BoxLayout.Y_AXIS));
-        panelPosts.setBackground(new Color(245, 247, 250));
+        panelPosts.setBackground(BG);
 
         JScrollPane scroll = new JScrollPane(panelPosts);
         scroll.setBorder(null);
@@ -78,8 +58,8 @@ public class Publicaciones extends JPanel {
         centro.add(panelNuevo, BorderLayout.NORTH);
         centro.add(scroll, BorderLayout.CENTER);
 
-        contenido.add(centro, BorderLayout.CENTER);
-        add(contenido, BorderLayout.CENTER);
+        derecho.add(centro, BorderLayout.CENTER);
+        add(derecho, BorderLayout.CENTER);
 
         cargarPublicaciones();
 
@@ -92,30 +72,73 @@ public class Publicaciones extends JPanel {
         });
     }
 
+    private JPanel crearTopBar(String titulo) {
+        JPanel bar = new JPanel(new BorderLayout());
+        bar.setBackground(BEIGE);
+        bar.setBorder(new EmptyBorder(12, 30, 12, 30));
+        bar.setPreferredSize(new Dimension(0, 70));
+
+        JPanel izq = new JPanel(new GridLayout(2, 1));
+        izq.setOpaque(false);
+
+        JLabel lblTitulo = new JLabel(titulo);
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
+
+        JLabel lblFecha = new JLabel(new java.text.SimpleDateFormat(
+                "EEEE, d 'de' MMMM 'de' yyyy", new java.util.Locale("es", "GT"))
+                .format(new java.util.Date()));
+        lblFecha.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblFecha.setForeground(new Color(0x55, 0x55, 0x77));
+
+        izq.add(lblTitulo);
+        izq.add(lblFecha);
+
+        JPanel der = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        der.setOpaque(false);
+
+        JTextField buscador = new JTextField("Buscar...");
+        buscador.setPreferredSize(new Dimension(200, 30));
+        buscador.setForeground(Color.GRAY);
+        buscador.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (buscador.getText().equals("Buscar...")) buscador.setText("");
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (buscador.getText().isEmpty()) buscador.setText("Buscar...");
+            }
+        });
+
+        JLabel campana = new JLabel("🔔");
+        campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        JLabel perfil = new JLabel("👤");
+        perfil.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+
+        der.add(buscador);
+        der.add(campana);
+        der.add(perfil);
+
+        bar.add(izq, BorderLayout.WEST);
+        bar.add(der, BorderLayout.EAST);
+        return bar;
+    }
+
     private void cargarPublicaciones() {
         panelPosts.removeAll();
-
         String sql = "SELECT u.nombre, u.apellido, p.contenido, p.creado_en "
                    + "FROM publicaciones p JOIN usuarios u ON p.usuario_id = u.id "
                    + "ORDER BY p.creado_en DESC LIMIT 50";
-
         try (Connection con = ConexionDB.getConexion();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
-
             while (rs.next()) {
-                String autor = rs.getString("nombre") + " " + rs.getString("apellido");
                 panelPosts.add(crearTarjetaPost(
-                    autor,
+                    rs.getString("nombre") + " " + rs.getString("apellido"),
                     rs.getString("contenido"),
-                    rs.getTimestamp("creado_en").toString()
-                ));
+                    rs.getTimestamp("creado_en").toString()));
             }
-
         } catch (SQLException ex) {
             panelPosts.add(new JLabel("  Error al cargar publicaciones: " + ex.getMessage()));
         }
-
         panelPosts.revalidate();
         panelPosts.repaint();
     }
@@ -126,17 +149,13 @@ public class Publicaciones extends JPanel {
             JOptionPane.showMessageDialog(this, "Inicia sesión para publicar.");
             return;
         }
-
         String sql = "INSERT INTO publicaciones (id, usuario_id, contenido, tipo) VALUES (?, ?, ?, 'post')";
-
         try (Connection con = ConexionDB.getConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
-
             ps.setString(1, UUID.randomUUID().toString());
             ps.setString(2, usuarioId);
             ps.setString(3, texto);
             ps.executeUpdate();
-
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Error al publicar: " + ex.getMessage());
         }
@@ -144,7 +163,7 @@ public class Publicaciones extends JPanel {
 
     private JPanel crearTarjetaPost(String autor, String texto, String fecha) {
         JPanel card = new JPanel(null);
-        card.setBackground(COLOR_BLANCO);
+        card.setBackground(Color.WHITE);
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
         card.setPreferredSize(new Dimension(0, 100));
         card.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.LIGHT_GRAY));
