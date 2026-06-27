@@ -1,15 +1,15 @@
 package main;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.sql.*;
 
 public class DashboardAdmin extends JPanel {
 
-    private final Color COLOR_MENU       = Color.decode("#243A69");
-    private final Color COLOR_SECUNDARIO = Color.decode("#5B88A5");
-    private final Color COLOR_ACENTO     = Color.decode("#9B73A6");
+    private final Color HEADER = new Color(219, 214, 207);
+    private final Color CARD1  = new Color(181, 208, 230);
+    private final Color CARD2  = new Color(193, 199, 225);
+    private final Color CARD3  = new Color(221, 216, 210);
 
     private final WorkBridgeApp app;
 
@@ -17,100 +17,102 @@ public class DashboardAdmin extends JPanel {
         this.app = app;
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
-        construirUI();
+
+        // Sidebar
+        add(new SidebarAdmin(app, "dashboardAdmin"), BorderLayout.WEST);
+
+        // Panel derecho (todo el contenido original)
+        JPanel derecho = new JPanel(new BorderLayout());
+        derecho.setBackground(Color.WHITE);
+
+        // Barra superior
+        derecho.add(crearTopBar(), BorderLayout.NORTH);
+
+        // Contenido principal
+        derecho.add(crearContenido(), BorderLayout.CENTER);
+
+        add(derecho, BorderLayout.CENTER);
     }
 
-    private void construirUI() {
-        JPanel sidebar = new SidebarAdmin(app, "dashboardAdmin");
-        add(sidebar, BorderLayout.WEST);
+    // ─── Top bar ────────────────────────────────────────────────────────────
 
-        JPanel contenido = new JPanel(new BorderLayout());
+    private JPanel crearTopBar() {
+        JPanel top = new JPanel(null);
+        top.setPreferredSize(new Dimension(0, 45));
+        top.setBackground(HEADER);
+
+        JLabel titulo = new JLabel("Dashboard administrativo");
+        titulo.setBounds(10, 4, 300, 20);
+        titulo.setFont(new Font("Arial Rounded MT Bold", Font.PLAIN, 18));
+        top.add(titulo);
+
+        JLabel fecha = new JLabel("Domingo, 7 de junio de 2026");
+        fecha.setBounds(10, 22, 250, 15);
+        fecha.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        top.add(fecha);
+
+        JLabel usuario = new JLabel("Administrador");
+        usuario.setBounds(880, 10, 180, 20);
+        usuario.setFont(new Font("Arial Rounded MT Bold", Font.PLAIN, 16));
+        top.add(usuario);
+
+        return top;
+    }
+
+    // ─── Contenido principal ─────────────────────────────────────────────────
+
+    private JPanel crearContenido() {
+        JPanel contenido = new JPanel(null);
         contenido.setBackground(Color.WHITE);
 
-        JPanel norte = new JPanel(new BorderLayout());
-        norte.setBackground(Color.WHITE);
-        norte.setBorder(new EmptyBorder(20, 30, 20, 30));
+        // Tarjetas superiores
+        contenido.add(crearTarjeta("Resumen de Usuario", "127", "Usuarios",         CARD1, 100, 70));
+        contenido.add(crearTarjeta("Ofertas De Empleo",  "36",  "Activas",          CARD2, 420, 70));
+        contenido.add(crearTarjeta("Comunicaciones",     "25",  "Enviadas",         CARD3, 740, 70));
 
-        JLabel titulo = new JLabel("Dashboard Administrativo");
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        // Gráfica usuarios
+        JPanel grafica1 = new JPanel();
+        grafica1.setBounds(100, 220, 290, 200);
+        grafica1.setBorder(new LineBorder(Color.GRAY));
+        grafica1.setBackground(Color.WHITE);
+        grafica1.add(new JLabel("Usuarios"));
+        contenido.add(grafica1);
 
-        JButton btnSalir = new JButton("Cerrar sesión");
-        btnSalir.addActionListener(e -> app.cerrarSesion());
+        // Gráfica empleos
+        JPanel grafica2 = new JPanel();
+        grafica2.setBounds(470, 220, 290, 200);
+        grafica2.setBorder(new LineBorder(Color.GRAY));
+        grafica2.setBackground(Color.WHITE);
+        grafica2.add(new JLabel("Ofertas de Empleo"));
+        contenido.add(grafica2);
 
-        norte.add(titulo, BorderLayout.WEST);
-        norte.add(btnSalir, BorderLayout.EAST);
-
-        contenido.add(norte, BorderLayout.NORTH);
-
-        JPanel panelTarjetas = new JPanel(new GridLayout(2, 3, 20, 20));
-        panelTarjetas.setBackground(Color.WHITE);
-        panelTarjetas.setBorder(new EmptyBorder(20, 40, 40, 40));
-
-        try (Connection con = ConexionDB.getConexion()) {
-            panelTarjetas.add(crearTarjeta(
-                    "Usuarios totales",
-                    contar(con, "SELECT COUNT(*) FROM usuarios"),
-                    COLOR_SECUNDARIO));
-
-            panelTarjetas.add(crearTarjeta(
-                    "Trabajadores",
-                    contar(con, "SELECT COUNT(*) FROM usuarios WHERE rol='trabajador'"),
-                    Color.decode("#4A90D9")));
-
-            panelTarjetas.add(crearTarjeta(
-                    "Empresas registradas",
-                    contar(con, "SELECT COUNT(*) FROM empresas"),
-                    COLOR_MENU));
-
-            panelTarjetas.add(crearTarjeta(
-                    "Empresas pendientes",
-                    contar(con, "SELECT COUNT(*) FROM empresas WHERE estado_verificacion='pendiente'"),
-                    new Color(200, 130, 30)));
-
-            panelTarjetas.add(crearTarjeta(
-                    "Vacantes activas",
-                    contar(con, "SELECT COUNT(*) FROM vacantes WHERE estado='activa'"),
-                    new Color(34, 139, 34)));
-
-            panelTarjetas.add(crearTarjeta(
-                    "Postulaciones totales",
-                    contar(con, "SELECT COUNT(*) FROM postulaciones"),
-                    COLOR_ACENTO));
-
-        } catch (SQLException ex) {
-            JLabel err = new JLabel("Error al conectar con la base de datos: " + ex.getMessage());
-            err.setForeground(Color.RED);
-            panelTarjetas.add(err);
-        }
-
-        contenido.add(panelTarjetas, BorderLayout.CENTER);
-        add(contenido, BorderLayout.CENTER);
+        return contenido;
     }
 
-    private String contar(Connection con, String sql) {
-        try (Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) return String.valueOf(rs.getInt(1));
-        } catch (SQLException ex) {
-            return "?";
-        }
-        return "0";
-    }
+    // ─── Tarjeta ─────────────────────────────────────────────────────────────
 
-    private JPanel crearTarjeta(String titulo, String valor, Color color) {
-        JPanel panel = new JPanel(new BorderLayout());
+    private JPanel crearTarjeta(String titulo, String valor, String subtitulo,
+                                 Color color, int x, int y) {
+        JPanel panel = new JPanel(null);
+        panel.setBounds(x, y, 240, 130);
         panel.setBackground(color);
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        panel.setBorder(new LineBorder(Color.GRAY));
 
-        JLabel lblTitulo = new JLabel(titulo);
-        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lblTitulo.setForeground(Color.WHITE);
+        JLabel t = new JLabel(titulo);
+        t.setBounds(10, 10, 200, 20);
+        t.setFont(new Font("Arial Rounded MT Bold", Font.PLAIN, 16));
+        panel.add(t);
 
-        JLabel lblValor = new JLabel(valor);
-        lblValor.setFont(new Font("Segoe UI", Font.BOLD, 48));
-        lblValor.setForeground(Color.WHITE);
+        JLabel v = new JLabel(valor);
+        v.setBounds(10, 30, 140, 60);
+        v.setFont(new Font("Arial Rounded MT Bold", Font.PLAIN, 52));
+        panel.add(v);
 
-        panel.add(lblTitulo, BorderLayout.NORTH);
-        panel.add(lblValor, BorderLayout.CENTER);
+        JLabel s = new JLabel(subtitulo);
+        s.setBounds(12, 100, 100, 20);
+        s.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        panel.add(s);
+
         return panel;
     }
 }

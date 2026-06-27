@@ -19,10 +19,17 @@ public class VerificacionEmpresas extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(245, 247, 250));
 
+        // Sidebar
+        add(new SidebarAdmin(app, "empresas"), BorderLayout.WEST);
+
+        // Contenido principal
+        JPanel contenido = new JPanel(new BorderLayout());
+        contenido.setBackground(new Color(245, 247, 250));
+
         JLabel lblTitulo = new JLabel("Verificación de Empresas");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitulo.setBorder(BorderFactory.createEmptyBorder(15, 30, 10, 0));
-        add(lblTitulo, BorderLayout.NORTH);
+        contenido.add(lblTitulo, BorderLayout.NORTH);
 
         String[] columnas = {"ID", "Empresa", "NIT", "Sector", "Estado"};
         modeloTabla = new DefaultTableModel(columnas, 0) {
@@ -38,7 +45,6 @@ public class VerificacionEmpresas extends JPanel {
         JScrollPane scroll = new JScrollPane(tabla);
         scroll.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-        // Botones
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         panelBotones.setBackground(new Color(245, 247, 250));
 
@@ -59,8 +65,10 @@ public class VerificacionEmpresas extends JPanel {
         panelBotones.add(btnRechazar);
         panelBotones.add(btnRefrescar);
 
-        add(scroll, BorderLayout.CENTER);
-        add(panelBotones, BorderLayout.SOUTH);
+        contenido.add(scroll, BorderLayout.CENTER);
+        contenido.add(panelBotones, BorderLayout.SOUTH);
+
+        add(contenido, BorderLayout.CENTER);
 
         cargarEmpresas();
 

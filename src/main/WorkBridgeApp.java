@@ -12,36 +12,40 @@ public class WorkBridgeApp extends JFrame {
     private Map<String, Component> screens;
 
     private String usuarioIdSesion = null;
-    private String rolSesion       = null;
+    private String rolSesion = null;
 
     public WorkBridgeApp() {
         setTitle("Work Bridge");
-        setSize(1400, 900);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        setPreferredSize(new Dimension(1920, 1080));
+        setMinimumSize(new Dimension(1920, 1080));
+        setSize(1920, 1080);
+
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
 
         cardLayout = new CardLayout();
-        mainPanel  = new JPanel(cardLayout);
-        screens    = new HashMap<>();
+        mainPanel = new JPanel(cardLayout);
+        screens = new HashMap<>();
 
         initializeScreens();
-        add(mainPanel);
+        setContentPane(mainPanel);
         mostrarPantalla("registro");
     }
 
     private void initializeScreens() {
-        screens.put("registro",          new Registro(this));
-        screens.put("publicaciones",     new Publicaciones(this));
-        screens.put("perfilTrabajador",  new PerfilPublicoTrabajador(this));
-        screens.put("documentos",        new GestionDocumentos(this));
-        screens.put("notificaciones",    new Notificaciones(this));
-        screens.put("comunicaciones",    new Comunicaciones(this));
-        screens.put("dashboardAdmin",    new DashboardAdmin(this));
-        screens.put("gestionUsuarios",   new GestionUsuarios(this));
-        screens.put("empresas",          new VerificacionEmpresas(this));
-        screens.put("habilidades",       new GestionHabilidades(this));
-        screens.put("dashboardEmpresa",  crearDashboardEmpresa());
+        screens.put("registro", new Registro(this));
+        screens.put("publicaciones", new Publicaciones(this));
+        screens.put("perfilTrabajador", new PerfilPublicoTrabajador(this));
+        screens.put("documentos", new GestionDocumentos(this));
+        screens.put("notificaciones", new Notificaciones(this));
+        screens.put("comunicaciones", new Comunicaciones(this));
+        screens.put("dashboardAdmin", new DashboardAdmin(this));
+        screens.put("gestionUsuarios", new GestionUsuarios(this));
+        screens.put("empresas", new VerificacionEmpresas(this));
+        screens.put("habilidades", new GestionHabilidades(this));
+        screens.put("dashboardEmpresa", crearDashboardEmpresa());
 
         for (Map.Entry<String, Component> entry : screens.entrySet()) {
             mainPanel.add(entry.getValue(), entry.getKey());
@@ -49,10 +53,13 @@ public class WorkBridgeApp extends JFrame {
     }
 
     public void reemplazarPantalla(String nombre, JPanel nuevoPanel) {
-        if (screens.containsKey(nombre)) mainPanel.remove(screens.get(nombre));
+        if (screens.containsKey(nombre)) {
+            mainPanel.remove(screens.get(nombre));
+        }
         screens.put(nombre, nuevoPanel);
         mainPanel.add(nuevoPanel, nombre);
         mainPanel.revalidate();
+        mainPanel.repaint();
     }
 
     public void mostrarPantalla(String nombrePantalla) {
@@ -65,33 +72,37 @@ public class WorkBridgeApp extends JFrame {
 
     public void iniciarSesion(String usuarioId, String rol) {
         this.usuarioIdSesion = usuarioId;
-        this.rolSesion       = rol;
+        this.rolSesion = rol;
 
-        reemplazarPantalla("publicaciones",    new Publicaciones(this));
+        reemplazarPantalla("publicaciones", new Publicaciones(this));
         reemplazarPantalla("perfilTrabajador", new PerfilPublicoTrabajador(this));
-        reemplazarPantalla("documentos",       new GestionDocumentos(this));
-        reemplazarPantalla("notificaciones",   new Notificaciones(this));
-        reemplazarPantalla("comunicaciones",   new Comunicaciones(this));
-        reemplazarPantalla("dashboardAdmin",   new DashboardAdmin(this));
-        reemplazarPantalla("gestionUsuarios",  new GestionUsuarios(this));
-        reemplazarPantalla("empresas",         new VerificacionEmpresas(this));
-        reemplazarPantalla("habilidades",      new GestionHabilidades(this));
+        reemplazarPantalla("documentos", new GestionDocumentos(this));
+        reemplazarPantalla("notificaciones", new Notificaciones(this));
+        reemplazarPantalla("comunicaciones", new Comunicaciones(this));
+        reemplazarPantalla("dashboardAdmin", new DashboardAdmin(this));
+        reemplazarPantalla("gestionUsuarios", new GestionUsuarios(this));
+        reemplazarPantalla("empresas", new VerificacionEmpresas(this));
+        reemplazarPantalla("habilidades", new GestionHabilidades(this));
 
         switch (rol) {
-            case "admin"      -> mostrarPantalla("dashboardAdmin");
+            case "admin" -> mostrarPantalla("dashboardAdmin");
             case "reclutador" -> mostrarPantalla("dashboardEmpresa");
-            default           -> mostrarPantalla("publicaciones");
+            default -> mostrarPantalla("publicaciones");
         }
     }
 
-    public String getUsuarioIdSesion() { return usuarioIdSesion; }
-    public String getRolSesion()        { return rolSesion; }
+    public String getUsuarioIdSesion() {
+        return usuarioIdSesion;
+    }
+
+    public String getRolSesion() {
+        return rolSesion;
+    }
 
     private JPanel crearDashboardEmpresa() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Color.WHITE);
 
-        // Logo arriba
         JLabel lblLogo = Recursos.crearLabelLogo(180, 70, "WorkBridge");
         lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
         lblLogo.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
@@ -105,9 +116,11 @@ public class WorkBridgeApp extends JFrame {
         JButton btnSalir = new JButton("Cerrar sesión");
         btnSalir.addActionListener(e -> cerrarSesion());
         btnSalir.setPreferredSize(new Dimension(160, 36));
+
         JPanel sur = new JPanel();
         sur.add(btnSalir);
         panel.add(sur, BorderLayout.SOUTH);
+
         return panel;
     }
 
