@@ -1,0 +1,202 @@
+package main;
+
+import javax.swing.*;
+import java.awt.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.sql.*;
+import java.util.UUID;
+
+/**
+ * Ventana modal para crear un nuevo usuario.
+ * Se abre desde GestionUsuarios al presionar "Nuevo Usuario".
+ *
+ * Ajustado al esquema real de la tabla `usuarios`:
+ *   id CHAR(36) PRIMARY KEY (UUID), nombre, apellido, email UNIQUE,
+ *   password_hash VARCHAR(255), rol ENUM('trabajador','reclutador','admin'),
+ *   creado_en DATETIME DEFAULT CURRENT_TIMESTAMP.
+ * No existe columna `estado` en esta tabla.
+ */
+public class CrearUsuarioDialog extends JDialog {
+
+    private final Color COLOR_MENU = new Color(0x24, 0x3A, 0x69);
+    private final Color MORADO     = new Color(196, 167, 206);
+
+    private final JTextField txtNombre   = new JTextField();
+    private final JTextField txtApellido = new JTextField();
+    private final JTextField txtCorreo   = new JTextField();
+    private final JPasswordField txtPassword = new JPasswordField();
+    private final JComboBox<String> comboRol =
+            new JComboBox<>(new String[]{"trabajador", "reclutador", "admin"});
+
+    private boolean guardadoExitoso = false;
+
+    public CrearUsuarioDialog(Frame owner) {
+        super(owner, "Nuevo Usuario", true);
+
+        setSize(420, 470);
+        setLocationRelativeTo(owner);
+        setResizable(false);
+        getContentPane().setBackground(Color.WHITE);
+        setLayout(null);
+
+        JLabel titulo = new JLabel("Nuevo Usuario");
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titulo.setForeground(MORADO.darker());
+        titulo.setBounds(20, 15, 300, 30);
+        add(titulo);
+
+        int y = 60;
+        y = agregarCampo("Nombre", txtNombre, y);
+        y = agregarCampo("Apellido", txtApellido, y);
+        y = agregarCampo("Correo", txtCorreo, y);
+        y = agregarCampo("Contraseña", txtPassword, y);
+        y = agregarComboField("Rol", comboRol, y);
+
+        JButton btnGuardar = new JButton("Crear Usuario");
+        btnGuardar.setBounds(60, y + 20, 160, 35);
+        btnGuardar.setBackground(COLOR_MENU);
+        btnGuardar.setForeground(Color.WHITE);
+        btnGuardar.setFocusPainted(false);
+        btnGuardar.setBorderPainted(false);
+        add(btnGuardar);
+
+        JButton btnCancelar = new JButton("Cancelar");
+        btnCancelar.setBounds(230, y + 20, 120, 35);
+        btnCancelar.setBackground(Color.LIGHT_GRAY);
+        btnCancelar.setFocusPainted(false);
+        btnCancelar.setBorderPainted(false);
+        add(btnCancelar);
+
+        btnGuardar.addActionListener(e -> guardarUsuario());
+        btnCancelar.addActionListener(e -> dispose());
+    }
+
+    private int agregarCampo(String etiqueta, JTextField campo, int y) {
+        JLabel lbl = new JLabel(etiqueta);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lbl.setBounds(20, y, 150, 22);
+        add(lbl);
+
+        campo.setBounds(20, y + 22, 370, 28);
+        add(campo);
+        return y + 58;
+    }
+
+    private int agregarComboField(String etiqueta, JComboBox<String> combo, int y) {
+        JLabel lbl = new JLabel(etiqueta);
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lbl.setBounds(20, y, 150, 22);
+        add(lbl);
+
+        combo.setBounds(20, y + 22, 370, 28);
+        add(combo);
+        return y + 58;
+    }
+
+    // ─── Validación y guardado ─────────────────────────────────────────────
+
+    private void guardarUsuario() {
+        String nombre   = txtNombre.getText().trim();
+        String apellido = txtApellido.getText().trim();
+        String correo   = txtCorreo.getText().trim();
+        String password = new String(txtPassword.getPassword()).trim();
+
+        if (nombre.isEmpty() || apellido.isEmpty() || correo.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Debe completar todos los campos.",
+                    "Campos incompletos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (!correo.contains("@") || !correo.contains(".")) {
+            JOptionPane.showMessageDialog(this,
+                    "Ingrese un correo electrónico válido.",
+                    "Correo inválido", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (password.length() < 6) {
+            JOptionPane.showMessageDialog(this,
+                    "La contraseña debe tener al menos 6 caracteres.",
+                    "Contraseña insegura", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try (Connection con = ConexionDB.getConexion()) {
+
+            // Regla de negocio: el correo es UNIQUE en la tabla, validamos antes de insertar
+            String sqlExiste = "SELECT COUNT(*) FROM usuarios WHERE email = ?";
+            try (PreparedStatement psExiste = con.prepareStatement(sqlExiste)) {
+                psExiste.setString(1, correo);
+                try (ResultSet rs = psExiste.executeQuery()) {
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        JOptionPane.showMessageDialog(this,
+                                "Ya existe un usuario registrado con ese correo.",
+                                "Correo duplicado", JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+            }
+
+            String idNuevo = UUID.randomUUID().toString();
+            String passwordHash = hashPassword(password);
+
+            String sqlInsert = "INSERT INTO usuarios (id, nombre, apellido, email, password_hash, rol, creado_en) "
+                              + "VALUES (?, ?, ?, ?, ?, ?, NOW())";
+
+            try (PreparedStatement ps = con.prepareStatement(sqlInsert)) {
+                ps.setString(1, idNuevo);
+                ps.setString(2, nombre);
+                ps.setString(3, apellido);
+                ps.setString(4, correo);
+                ps.setString(5, passwordHash);
+                ps.setString(6, (String) comboRol.getSelectedItem());
+
+                int filas = ps.executeUpdate();
+
+                if (filas > 0) {
+                    guardadoExitoso = true;
+                    JOptionPane.showMessageDialog(this,
+                            "Los cambios se guardaron correctamente.",
+                            "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "No se pudo crear el usuario.",
+                            "Aviso", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al guardar la información: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NoSuchAlgorithmException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Error al procesar la contraseña: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Genera un hash SHA-256 de la contraseña para no guardarla en texto plano.
+     * NOTA: para un proyecto en producción se recomienda BCrypt (con sal),
+     * pero requiere agregar una librería externa (org.mindrot:jbcrypt).
+     * SHA-256 aquí es una mejora mínima aceptable para un proyecto académico.
+     */
+    private String hashPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(password.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    /** Indica si el diálogo cerró tras guardar exitosamente, para refrescar la tabla. */
+    public boolean isGuardadoExitoso() {
+        return guardadoExitoso;
+    }
+}
