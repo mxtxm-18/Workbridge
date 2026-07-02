@@ -1,14 +1,15 @@
+package main;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.sql.*;
 
-public class Gestion_Empresa extends JFrame {
+public class Gestion_Empresa extends JPanel {
 
     static final Color NAVY      = new Color(0x24, 0x3A, 0x69);
     static final Color STEEL     = new Color(0x5B, 0x88, 0xA5);
@@ -19,188 +20,85 @@ public class Gestion_Empresa extends JFrame {
     static final Color TEXT_DARK = new Color(0x1A, 0x1A, 0x2E);
     static final Color TEXT_MID  = new Color(0x55, 0x55, 0x77);
     static final Color TEXT_LINK = STEEL;
-    static final Color SIDEBAR_ACTIVE_BG = MAUVE;
 
-    private static final int SIDEBAR_WIDTH = 340;
+    private final WorkBridgeApp app;
+    private String empresaIdActual;
 
-    private JLabel lblNombreEmpresa;
-    private JLabel lblCorreo;
-    private JLabel lblTelefono;
-    private JLabel lblSitioWeb;
-    private JLabel lblDireccion;
-    private JLabel lblNIT;
+    private JLabel lblCorreo, lblTelefono, lblSitioWeb, lblDireccion, lblNIT;
     private JTextArea txtSobreEmpresa;
-    private JLabel lblLinkedIn;
-    private JLabel lblFacebook;
-    private JLabel lblInstagram;
+    private JLabel lblLinkedIn, lblFacebook, lblInstagram;
+    private JLabel lblVacantesActivas, lblPostulaciones, lblEntrevistas, lblContratados, lblVisitas;
+    private JLabel lblTituloEmpresa; // nombre en el topbar
 
-    private JLabel lblVacantesActivas;
-    private JLabel lblPostulaciones;
-    private JLabel lblEntrevistas;
-    private JLabel lblContratados;
-    private JLabel lblVisitas;
-
-    public Gestion_Empresa() {
-        setTitle("WorkBridge");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1920, 1080);
-        setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(1366, 768));
+    public Gestion_Empresa(WorkBridgeApp app) {
+        this.app = app;
         setLayout(new BorderLayout());
 
-        add(crearSidebar(), BorderLayout.WEST);
+        add(new SidebarAdmin(app, "empresas"), BorderLayout.WEST);
         add(crearContenido(), BorderLayout.CENTER);
-
-        cargarDatos(
-            "TechCorp S.A.",
-            "rrhh@techcorp.com.gt",
-            "+502 2222-3333",
-            "www.techcorp.com.gt",
-            "4a Av. 12-45 Zona 10, Ciudad de Guatemala",
-            "1234567-8",
-            "TechCorp S.A. es una empresa líder en desarrollo de software y soluciones tecnológicas para el mercado centroamericano. Nos especializamos en transformación digital, desarrollo de aplicaciones empresariales y consultoría en tecnología de la información.\n\nCreemos en el talento local y la innovación constante. Nuestro equipo multidisciplinario trabaja en proyectos retadores para clientes en Guatemala, El Salvador y Honduras.",
-            "linkedin.com/company/techcorp-gt",
-            "facebook.com/techcorpgt",
-            "@techcorpgt",
-            3, 47, 8, 2, 312
-        );
     }
 
-    private JPanel crearSidebar() {
-        JPanel sidebar = new JPanel() {
-            @Override protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setColor(NAVY);
-                g2.fillRect(0, 0, getWidth(), getHeight());
-            }
-        };
-        sidebar.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 1080));
-        sidebar.setMinimumSize(new Dimension(SIDEBAR_WIDTH, 1080));
-        sidebar.setMaximumSize(new Dimension(SIDEBAR_WIDTH, Integer.MAX_VALUE));
-        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setOpaque(false);
+    /** Llamar esto al navegar a la pantalla, pasando el id de la empresa a mostrar. */
+    public void cargarEmpresaPorId(String empresaId) {
+        this.empresaIdActual = empresaId;
+        String sql = "SELECT nombre_empresa, nit, sector, descripcion, sitio_web, " +
+                     "correo_contacto, telefono, direccion, linkedin_url, facebook_url, " +
+                     "instagram_url, visitas_perfil FROM empresas WHERE id = ?";
 
-        JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 24));
-        logoPanel.setOpaque(false);
-        logoPanel.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 180));
+        try (Connection con = ConexionDB.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-        URL urlLogo = getClass().getResource("/Recursos/logo.png");
-        JLabel lblLogo;
-        if (urlLogo != null) {
-            Image logoImg = new ImageIcon(urlLogo).getImage()
-                    .getScaledInstance(250, -1, Image.SCALE_SMOOTH);
-            lblLogo = new JLabel(new ImageIcon(logoImg));
-        } else {
-            lblLogo = new JLabel("WorkBridge");
-            lblLogo.setFont(new Font("SansSerif", Font.BOLD, 22));
-            lblLogo.setForeground(WHITE);
-        }
-        lblLogo.setPreferredSize(new Dimension(250, 120));
-
-        logoPanel.add(lblLogo);
-        sidebar.add(logoPanel);
-
-        JLabel tagline = new JLabel("CONECTAMOS TALENTO, GENERAMOS OPORTUNIDADES");
-        tagline.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        tagline.setForeground(BEIGE);
-        tagline.setAlignmentX(Component.CENTER_ALIGNMENT);
-        sidebar.add(tagline);
-        sidebar.add(Box.createVerticalStrut(24));
-
-        String[][] items = {
-            {"Inicio",        "INICIO"},
-            {"Mi empresa",    "MI_EMPRESA"},
-            {"Mis Vacantes",  "VACANTES"},
-            {"Postulaciones", "POSTULACIONES"},
-        };
-
-        for (String[] item : items) {
-            sidebar.add(crearMenuItem(item[0], item[1].equals("MI_EMPRESA")));
-        }
-
-        sidebar.add(crearSeccionLabel("Gestión"));
-        sidebar.add(crearMenuItem("Entrevistas",    false));
-        sidebar.add(crearMenuItem("Comunicaciones", false));
-        sidebar.add(crearMenuItem("Notificaciones", false));
-
-        sidebar.add(crearSeccionLabel("Sistema"));
-        sidebar.add(crearMenuItem("Configuracion",  false));
-
-        sidebar.add(Box.createVerticalGlue());
-        sidebar.add(crearSidebarFooter());
-
-        return sidebar;
-    }
-
-    private JLabel crearSeccionLabel(String texto) {
-        JLabel lbl = new JLabel(texto);
-        lbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
-        lbl.setForeground(new Color(0xAA, 0xBB, 0xCC));
-        lbl.setBorder(new EmptyBorder(16, 24, 4, 0));
-        lbl.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 30));
-        return lbl;
-    }
-
-    private JPanel crearMenuItem(String texto, boolean activo) {
-        JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 11)) {
-            @Override protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (activo) {
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setColor(SIDEBAR_ACTIVE_BG);
-                    g2.fill(new RoundRectangle2D.Double(10, 3, getWidth() - 20, getHeight() - 6, 14, 14));
+            ps.setString(1, empresaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    JOptionPane.showMessageDialog(this, "No se encontró la empresa.");
+                    return;
                 }
+
+                int vacantesActivas = contar(con,
+                    "SELECT COUNT(*) FROM vacantes WHERE empresa_id=? AND estado='activa'", empresaId);
+                int postulaciones = contar(con,
+                    "SELECT COUNT(*) FROM postulaciones p JOIN vacantes v ON p.vacante_id=v.id " +
+                    "WHERE v.empresa_id=?", empresaId);
+                int entrevistas = contar(con,
+                    "SELECT COUNT(*) FROM entrevistas ent " +
+                    "JOIN postulaciones p ON ent.postulacion_id = p.id " +
+                    "JOIN vacantes v ON p.vacante_id = v.id " +
+                    "WHERE v.empresa_id=? AND MONTH(ent.fecha_hora)=MONTH(CURDATE()) " +
+                    "AND YEAR(ent.fecha_hora)=YEAR(CURDATE())", empresaId);
+                int contratados = contar(con,
+                    "SELECT COUNT(*) FROM postulaciones p JOIN vacantes v ON p.vacante_id=v.id " +
+                    "WHERE v.empresa_id=? AND p.estado='aceptada'", empresaId);
+
+                cargarDatos(
+                    rs.getString("nombre_empresa"),
+                    rs.getString("correo_contacto"),
+                    rs.getString("telefono"),
+                    rs.getString("sitio_web"),
+                    rs.getString("direccion"),
+                    rs.getString("nit"),
+                    rs.getString("descripcion"),
+                    rs.getString("linkedin_url"),
+                    rs.getString("facebook_url"),
+                    rs.getString("instagram_url"),
+                    vacantesActivas, postulaciones, entrevistas, contratados,
+                    rs.getInt("visitas_perfil")
+                );
             }
-        };
-        item.setOpaque(false);
-        item.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 52));
-        item.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 52));
-        item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        JLabel lbl = new JLabel(texto);
-        lbl.setFont(new Font("SansSerif", activo ? Font.BOLD : Font.PLAIN, 18));
-        lbl.setForeground(WHITE);
-        item.add(lbl);
-
-        if (!activo) {
-            item.addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) { item.repaint(); }
-                public void mouseExited(MouseEvent e)  { item.repaint(); }
-            });
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Error al cargar los datos de la empresa: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
-        return item;
     }
 
-    private JPanel crearSidebarFooter() {
-        JPanel footer = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 16));
-        footer.setOpaque(false);
-        footer.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 86));
-        footer.setBorder(new MatteBorder(1, 0, 0, 0, new Color(0x40, 0x50, 0x80)));
-
-        JLabel fotoPequena = new JLabel() {
-            @Override protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(STEEL);
-                g2.fillOval(0, 0, 44, 44);
-                g2.setColor(WHITE);
-                g2.setFont(new Font("SansSerif", Font.BOLD, 16));
-                FontMetrics fm = g2.getFontMetrics();
-                g2.drawString("T", (44 - fm.stringWidth("T")) / 2, 28);
-                g2.dispose();
+    private int contar(Connection con, String sql, String empresaId) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, empresaId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
             }
-        };
-        fotoPequena.setPreferredSize(new Dimension(44, 44));
-
-        lblNombreEmpresa = new JLabel("TechCorp S.A.");
-        lblNombreEmpresa.setFont(new Font("SansSerif", Font.BOLD, 14));
-        lblNombreEmpresa.setForeground(WHITE);
-
-        footer.add(fotoPequena);
-        footer.add(lblNombreEmpresa);
-        return footer;
+        }
     }
 
     private JPanel crearContenido() {
@@ -225,56 +123,19 @@ public class Gestion_Empresa extends JFrame {
         JPanel titulo = new JPanel(new GridLayout(2, 1));
         titulo.setOpaque(false);
 
-        JLabel lblTitulo = new JLabel("Mi empresa");
-        lblTitulo.setFont(new Font("SansSerif", Font.BOLD, 24));
-        lblTitulo.setForeground(TEXT_DARK);
+        lblTituloEmpresa = new JLabel("Mi empresa");
+        lblTituloEmpresa.setFont(new Font("SansSerif", Font.BOLD, 24));
+        lblTituloEmpresa.setForeground(TEXT_DARK);
 
         JLabel lblFecha = new JLabel(getFechaActual());
         lblFecha.setFont(new Font("SansSerif", Font.PLAIN, 13));
         lblFecha.setForeground(TEXT_MID);
 
-        titulo.add(lblTitulo);
+        titulo.add(lblTituloEmpresa);
         titulo.add(lblFecha);
 
-        JPanel derecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        derecha.setOpaque(false);
-
-        JTextField buscador = new JTextField("Buscar candidatos");
-        buscador.setPreferredSize(new Dimension(240, 34));
-        buscador.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        buscador.setForeground(TEXT_MID);
-        buscador.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(BEIGE, 1, true),
-            new EmptyBorder(0, 8, 0, 8)
-        ));
-        buscador.addFocusListener(new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
-                if (buscador.getText().equals("Buscar candidatos")) buscador.setText("");
-            }
-            public void focusLost(FocusEvent e) {
-                if (buscador.getText().isEmpty()) buscador.setText("Buscar candidatos");
-            }
-        });
-
-        JButton btnCampana = crearIconBtn("🔔");
-        JButton btnUsuario = crearIconBtn("👤");
-
-        derecha.add(buscador);
-        derecha.add(btnCampana);
-        derecha.add(btnUsuario);
-
         bar.add(titulo, BorderLayout.WEST);
-        bar.add(derecha, BorderLayout.EAST);
         return bar;
-    }
-
-    private JButton crearIconBtn(String emoji) {
-        JButton btn = new JButton(emoji);
-        btn.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        btn.setBorderPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
     }
 
     private JPanel crearAreaTarjetas() {
@@ -316,6 +177,7 @@ public class Gestion_Empresa extends JFrame {
         btnEditar.setBorderPainted(false);
         btnEditar.setContentAreaFilled(false);
         btnEditar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnEditar.addActionListener(e -> abrirEditor());
 
         header.add(titulo,    BorderLayout.WEST);
         header.add(btnEditar, BorderLayout.EAST);
@@ -325,11 +187,11 @@ public class Gestion_Empresa extends JFrame {
         campos.setOpaque(false);
         campos.setLayout(new BoxLayout(campos, BoxLayout.Y_AXIS));
 
-        lblCorreo    = crearValorTexto("rrhh@techcorp.com.gt", false);
-        lblTelefono  = crearValorTexto("+502 2222-3333", true);
-        lblSitioWeb  = crearValorTexto("www.techcorp.com.gt", false);
-        lblDireccion = crearValorTexto("4a Av. 12-45 Zona 10, Ciudad de Guatemala", false);
-        lblNIT       = crearValorTexto("1234567-8", true);
+        lblCorreo    = crearValorTexto("—", false);
+        lblTelefono  = crearValorTexto("—", true);
+        lblSitioWeb  = crearValorTexto("—", false);
+        lblDireccion = crearValorTexto("—", false);
+        lblNIT       = crearValorTexto("—", true);
 
         campos.add(crearFilaConLabel("✉",  "Correo de Contacto", lblCorreo));
         campos.add(Box.createVerticalStrut(12));
@@ -343,6 +205,16 @@ public class Gestion_Empresa extends JFrame {
 
         card.add(campos, BorderLayout.CENTER);
         return card;
+    }
+
+    private void abrirEditor() {
+        if (empresaIdActual == null) {
+            JOptionPane.showMessageDialog(this, "No hay una empresa cargada para editar.");
+            return;
+        }
+        Window ventana = SwingUtilities.getWindowAncestor(this);
+        Frame frame = (ventana instanceof Frame) ? (Frame) ventana : null;
+        new EditarEmpresaDialog(frame, empresaIdActual, this).setVisible(true);
     }
 
     private JLabel crearValorTexto(String valor, boolean negrita) {
@@ -545,11 +417,7 @@ public class Gestion_Empresa extends JFrame {
 
     private String getFechaActual() {
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE, d 'de' MMMM 'de' yyyy", new Locale("es", "GT"));
-        return capitalize(sdf.format(new Date()));
-    }
-
-    private String capitalize(String s) {
-        if (s == null || s.isEmpty()) return s;
+        String s = sdf.format(new Date());
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
@@ -561,16 +429,16 @@ public class Gestion_Empresa extends JFrame {
             int contratados, int visitas) {
 
         SwingUtilities.invokeLater(() -> {
-            lblNombreEmpresa.setText(nombreEmpresa);
-            lblCorreo.setText(correo);
-            lblTelefono.setText(telefono);
-            lblSitioWeb.setText(sitioWeb);
-            lblDireccion.setText(direccion);
-            lblNIT.setText(nit);
-            txtSobreEmpresa.setText(descripcion);
-            lblLinkedIn.setText(linkedin);
-            lblFacebook.setText(facebook);
-            lblInstagram.setText(instagram);
+            lblTituloEmpresa.setText(nombreEmpresa != null ? nombreEmpresa : "Mi empresa");
+            lblCorreo.setText(vacio(correo));
+            lblTelefono.setText(vacio(telefono));
+            lblSitioWeb.setText(vacio(sitioWeb));
+            lblDireccion.setText(vacio(direccion));
+            lblNIT.setText(vacio(nit));
+            txtSobreEmpresa.setText(descripcion != null ? descripcion : "");
+            lblLinkedIn.setText(vacio(linkedin));
+            lblFacebook.setText(vacio(facebook));
+            lblInstagram.setText(vacio(instagram));
             lblVacantesActivas.setText(String.valueOf(vacantesActivas));
             lblPostulaciones.setText(String.valueOf(postulaciones));
             lblEntrevistas.setText(String.valueOf(entrevistas));
@@ -579,11 +447,7 @@ public class Gestion_Empresa extends JFrame {
         });
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
-
-        SwingUtilities.invokeLater(() -> new Gestion_Empresa().setVisible(true));
+    private String vacio(String s) {
+        return (s == null || s.isBlank()) ? "No registrado" : s;
     }
 }
