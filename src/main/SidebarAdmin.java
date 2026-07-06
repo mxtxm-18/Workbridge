@@ -1,26 +1,23 @@
 package main;
 
 import javax.swing.*;
-import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
 import java.net.URL;
 
 public class SidebarAdmin extends JPanel {
 
-    // ─── Paleta ─────────────────────────────────────────────────────────────
-    static final Color NAVY              = new Color(0x24, 0x3A, 0x69);
-    static final Color STEEL             = new Color(0x5B, 0x88, 0xA5);
-    static final Color MAUVE             = new Color(0x9B, 0x73, 0xA6);
-    static final Color BEIGE             = new Color(0xD4, 0xCD, 0xC5);
-    static final Color WHITE             = Color.WHITE;
-    static final Color SIDEBAR_ACTIVE_BG = STEEL; // celeste como en la imagen
+    static final Color NAVY = new Color(0x24, 0x3A, 0x69);
+    static final Color STEEL = new Color(0x5B, 0x88, 0xA5);
+    static final Color MAUVE = new Color(0x9B, 0x73, 0xA6);
+    static final Color BEIGE = new Color(0xD4, 0xCD, 0xC5);
+    static final Color WHITE = Color.WHITE;
+    static final Color SIDEBAR_ACTIVE_BG = STEEL;
 
-    private static final Font FONT_NAV     = new Font("SansSerif", Font.PLAIN, 13);
-    private static final Font FONT_NAV_ACT = new Font("SansSerif", Font.BOLD,  13);
-    private static final Font FONT_LABEL   = new Font("SansSerif", Font.BOLD,   9);
-    private static final Font FONT_SMALL   = new Font("SansSerif", Font.PLAIN,  9);
+    private static final Font FONT_NAV = new Font("SansSerif", Font.PLAIN, 13);
+    private static final Font FONT_NAV_ACT = new Font("SansSerif", Font.BOLD, 13);
+    private static final Font FONT_LABEL = new Font("SansSerif", Font.BOLD, 9);
+    private static final Font FONT_SMALL = new Font("SansSerif", Font.PLAIN, 9);
 
     private static final int SIDEBAR_WIDTH = 220;
 
@@ -29,7 +26,7 @@ public class SidebarAdmin extends JPanel {
     private String nombreUsuario = "Admin";
 
     public SidebarAdmin(WorkBridgeApp app, String activo) {
-        this.app    = app;
+        this.app = app;
         this.activo = activo;
 
         setPreferredSize(new Dimension(SIDEBAR_WIDTH, 0));
@@ -41,24 +38,40 @@ public class SidebarAdmin extends JPanel {
         add(crearLogoPanel());
         add(Box.createVerticalStrut(4));
 
-        // ── PRINCIPAL ──
         add(crearNavGroup("PRINCIPAL", new String[][]{
-            {"⊞", "Dashboard",      "dashboardAdmin",  null},
-            {"⚠", "Reportes",       "reportes",        "12"},
+                {"⊞", "Dashboard", "dashboardAdmin", null},
+                {"⚠", "Reportes", "reportes", "12"},
         }));
 
-        // ── MODERACIÓN ──
         add(crearNavGroup("MODERACIÓN", new String[][]{
-            {"◎", "Usuarios",       "gestionUsuarios", "3"},
-            {"▣", "Empresas",       "empresas",        null},
-            {"⊟", "Vacantes",       "vacantes",        null},
-            {"◱", "Comunicaciones", "comunicaciones",  "5"},
+                {"◎", "Usuarios", "gestionUsuarios", "3"},
+                {"▣", "Empresas", "empresas", null},
+                {"⊟", "Vacantes", "vacantes", null},
+                {"◱", "Comunicaciones", "comunicaciones", "5"},
         }));
 
-        // ── SISTEMA ──
         add(crearNavGroup("SISTEMA", new String[][]{
-            {"◈", "Estadísticas",  "estadisticas",    null},
-            {"⚙", "Configuración", "configuracion",   null},
+                {"◈", "Estadísticas", "estadisticas", null},
+                {"⚙", "Configuración", "configuracion", null},
+        }));
+
+        add(crearNavGroup("CONTENIDO", new String[][]{
+                {"▤", "Publicaciones", "publicaciones", null},
+                {"⎙", "Documentos", "documentos", null},
+                {"✎", "Habilidades", "habilidades", null},
+                {"◍", "Notificaciones", "notificaciones", null},
+        }));
+
+        add(crearNavGroup("PERFILES", new String[][]{
+                {"☺", "Perfil Usuario", "perfilUsuario", null},
+                {"◔", "Perfil Trabajador", "perfilTrabajador", null},
+                {"⌂", "Gestión Empresa", "gestionEmpresa", null},
+        }));
+
+        add(crearNavGroup("PANELES", new String[][]{
+                {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
+                {"⊠", "Dashboard Moderador", "dashboardModerador", null},
+                {"↺", "Registro", "registro", null},
         }));
 
         add(Box.createVerticalGlue());
@@ -70,35 +83,27 @@ public class SidebarAdmin extends JPanel {
         repaint();
     }
 
-    // ─── Fondo NAVY + degradado lavanda + líneas decorativas ────────────────
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                            RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Base NAVY
         g2.setColor(NAVY);
         g2.fillRect(0, 0, getWidth(), getHeight());
 
-        // Degradado lavanda inferior
         GradientPaint gp = new GradientPaint(
                 0, getHeight() - 200, new Color(155, 115, 166, 0),
-                0, getHeight(),       new Color(155, 115, 166, 80));
+                0, getHeight(), new Color(155, 115, 166, 80));
         g2.setPaint(gp);
         g2.fillRect(0, getHeight() - 200, getWidth(), 200);
 
-        // Líneas punteadas en borde derecho
         g2.setColor(new Color(91, 136, 165, 40));
-        g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND,
-                BasicStroke.JOIN_ROUND, 0, new float[]{4, 6}, 0));
-        for (int y = 20; y < getHeight(); y += 12)
+        g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 6}, 0));
+        for (int y = 20; y < getHeight(); y += 12) {
             g2.drawLine(getWidth() - 1, y, getWidth() - 1, y + 4);
+        }
     }
-
-    // ─── Logo ────────────────────────────────────────────────────────────────
 
     private JPanel crearLogoPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 14)) {
@@ -115,8 +120,7 @@ public class SidebarAdmin extends JPanel {
         URL urlLogo = getClass().getResource("/Recursos/logo.png");
         JLabel lblLogo;
         if (urlLogo != null) {
-            Image img = new ImageIcon(urlLogo).getImage()
-                    .getScaledInstance(160, -1, Image.SCALE_SMOOTH);
+            Image img = new ImageIcon(urlLogo).getImage().getScaledInstance(160, -1, Image.SCALE_SMOOTH);
             lblLogo = new JLabel(new ImageIcon(img));
         } else {
             lblLogo = new JLabel("WorkBridge");
@@ -127,8 +131,6 @@ public class SidebarAdmin extends JPanel {
         return panel;
     }
 
-    // ─── Grupo de navegación ─────────────────────────────────────────────────
-
     private JPanel crearNavGroup(String seccion, String[][] items) {
         JPanel group = new JPanel();
         group.setOpaque(false);
@@ -136,7 +138,6 @@ public class SidebarAdmin extends JPanel {
         group.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 0));
         group.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 999));
 
-        // Etiqueta de sección — centrada, gris tenue como en la imagen
         JLabel lbl = new JLabel(seccion, SwingConstants.CENTER);
         lbl.setFont(FONT_LABEL);
         lbl.setForeground(new Color(180, 190, 210, 140));
@@ -145,41 +146,42 @@ public class SidebarAdmin extends JPanel {
         lbl.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 20));
         group.add(lbl);
 
-        for (String[] item : items)
+        for (String[] item : items) {
             group.add(crearNavItem(item[0], item[1], item[2], item[3]));
-
+        }
         return group;
     }
 
-    // ─── Ítem de navegación ──────────────────────────────────────────────────
-
-    private JPanel crearNavItem(String icono, String texto,
-                                 String pantalla, String badge) {
+    private JPanel crearNavItem(String icono, String texto, String pantalla, String badge) {
         boolean esActivo = pantalla.equals(activo);
 
         JPanel row = new JPanel(new BorderLayout()) {
             boolean hovered = false;
+
             {
                 setOpaque(false);
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 addMouseListener(new MouseAdapter() {
-                    @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
-                    @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+                    @Override public void mouseEntered(MouseEvent e) { hovered = true; repaint(); }
+                    @Override public void mouseExited(MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
-                        app.mostrarPantalla(pantalla);
+                        if ("perfilUsuario".equals(pantalla)) {
+                            new PerfilUsuario().setVisible(true);
+                        } else if (app != null) {
+                            app.mostrarPantalla(pantalla);
+                        }
                     }
                 });
             }
+
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                    RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
                 if (esActivo) {
-                    // Fondo celeste redondeado (igual que la imagen)
                     g2.setColor(SIDEBAR_ACTIVE_BG);
                     g2.fillRoundRect(8, 2, getWidth() - 16, getHeight() - 4, 10, 10);
-                    // Barra BEIGE izquierda
                     g2.setColor(BEIGE);
                     g2.fillRoundRect(8, getHeight() / 2 - 10, 3, 20, 2, 2);
                 } else if (hovered) {
@@ -188,30 +190,25 @@ public class SidebarAdmin extends JPanel {
                 }
             }
         };
+
         row.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 38));
         row.setPreferredSize(new Dimension(SIDEBAR_WIDTH, 38));
         row.setBorder(BorderFactory.createEmptyBorder(2, 16, 2, 12));
 
-        // Icono + texto
         JLabel iconLabel = new JLabel(icono + "  " + texto);
         iconLabel.setFont(esActivo ? FONT_NAV_ACT : FONT_NAV);
         iconLabel.setForeground(esActivo ? WHITE : new Color(255, 255, 255, 170));
         row.add(iconLabel, BorderLayout.CENTER);
 
-        // Badge circular morado (igual que en la imagen)
         if (badge != null) {
             JLabel badgeLbl = new JLabel(badge) {
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g;
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                        RenderingHints.VALUE_ANTIALIAS_ON);
-                    // Círculo morado
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(MAUVE);
                     int size = Math.min(getWidth(), getHeight());
-                    g2.fillOval((getWidth() - size) / 2,
-                                (getHeight() - size) / 2,
-                                size, size);
+                    g2.fillOval((getWidth() - size) / 2, (getHeight() - size) / 2, size, size);
                     super.paintComponent(g);
                 }
             };
@@ -219,7 +216,6 @@ public class SidebarAdmin extends JPanel {
             badgeLbl.setForeground(WHITE);
             badgeLbl.setHorizontalAlignment(SwingConstants.CENTER);
             badgeLbl.setOpaque(false);
-            // Tamaño fijo cuadrado para que el círculo quede perfecto
             int sz = 22;
             badgeLbl.setPreferredSize(new Dimension(sz, sz));
             badgeLbl.setMinimumSize(new Dimension(sz, sz));
@@ -234,8 +230,6 @@ public class SidebarAdmin extends JPanel {
         return row;
     }
 
-    // ─── Footer ──────────────────────────────────────────────────────────────
-
     private JPanel crearFooter() {
         JPanel footer = new JPanel(new BorderLayout(10, 0)) {
             @Override
@@ -249,24 +243,18 @@ public class SidebarAdmin extends JPanel {
         footer.setBorder(BorderFactory.createEmptyBorder(12, 14, 16, 14));
         footer.setMaximumSize(new Dimension(SIDEBAR_WIDTH, 70));
 
-        // Avatar con degradado MAUVE → STEEL
         JLabel avatar = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                    RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setPaint(new GradientPaint(0, 0, MAUVE,
-                                              getWidth(), getHeight(), STEEL));
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setPaint(new GradientPaint(0, 0, MAUVE, getWidth(), getHeight(), STEEL));
                 g2.fillOval(0, 0, getWidth(), getHeight());
                 g2.setColor(WHITE);
                 g2.setFont(new Font("SansSerif", Font.BOLD, 13));
-                String ini = nombreUsuario.isEmpty() ? "A"
-                        : String.valueOf(nombreUsuario.charAt(0)).toUpperCase();
+                String ini = nombreUsuario.isEmpty() ? "A" : String.valueOf(nombreUsuario.charAt(0)).toUpperCase();
                 FontMetrics fm = g2.getFontMetrics();
-                g2.drawString(ini,
-                        (getWidth()  - fm.stringWidth(ini)) / 2,
-                        (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
+                g2.drawString(ini, (getWidth() - fm.stringWidth(ini)) / 2, (getHeight() + fm.getAscent() - fm.getDescent()) / 2);
                 g2.dispose();
             }
         };
@@ -292,8 +280,7 @@ public class SidebarAdmin extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                    RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(getModel().isRollover() ? MAUVE.darker() : MAUVE);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 6, 6);
                 super.paintComponent(g);
@@ -306,10 +293,10 @@ public class SidebarAdmin extends JPanel {
         btnSalir.setFocusPainted(false);
         btnSalir.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
         btnSalir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnSalir.addActionListener(e -> app.cerrarSesion());
+        btnSalir.addActionListener(e -> { if (app != null) app.cerrarSesion(); });
 
-        footer.add(avatar,   BorderLayout.WEST);
-        footer.add(info,     BorderLayout.CENTER);
+        footer.add(avatar, BorderLayout.WEST);
+        footer.add(info, BorderLayout.CENTER);
         footer.add(btnSalir, BorderLayout.EAST);
         return footer;
     }
