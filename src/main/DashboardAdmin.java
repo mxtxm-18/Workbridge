@@ -7,11 +7,18 @@ import java.sql.*;
 
 public class DashboardAdmin extends JPanel {
 
-    private final Color BEIGE     = new Color(219, 213, 205);
-    private final Color CARD1     = new Color(181, 208, 230);
-    private final Color CARD2     = new Color(193, 199, 225);
-    private final Color CARD3     = new Color(221, 216, 210);
+    private final Color BEIGE      = new Color(219, 213, 205);
+    private final Color CARD1      = new Color(181, 208, 230);
+    private final Color CARD2      = new Color(193, 199, 225);
+    private final Color CARD3      = new Color(221, 216, 210);
     private final Color COLOR_MENU = new Color(0x24, 0x3A, 0x69);
+
+    // Ancho del sidebar (debe coincidir con el usado por SidebarAdmin en el resto de las interfaces)
+    private final int SIDEBAR_WIDTH = 220;
+    // Resolución objetivo
+    private final int SCREEN_WIDTH  = 1920;
+    private final int SCREEN_HEIGHT = 1080;
+    private final int CONTENT_WIDTH = SCREEN_WIDTH - SIDEBAR_WIDTH; // 1690
 
     private final WorkBridgeApp app;
 
@@ -24,14 +31,21 @@ public class DashboardAdmin extends JPanel {
         this.app = app;
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
+        setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
 
-        // ── Diseño común: Sidebar ────────────────────────────────────────────
+        // ── Diseño común: Sidebar (el mismo componente que usan las demás pantallas,
+        //    por eso los botones de la izquierda quedan unificados en toda la app) ──
         add(new SidebarAdmin(app, "dashboardAdmin"), BorderLayout.WEST);
 
         JPanel derecho = new JPanel(new BorderLayout());
         derecho.setBackground(Color.WHITE);
         derecho.add(crearTopBar(), BorderLayout.NORTH);
-        derecho.add(crearContenido(), BorderLayout.CENTER);
+
+        // El contenido puede necesitar scroll si la ventana se hace más chica que 1920x1080
+        JScrollPane scroll = new JScrollPane(crearContenido());
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        derecho.add(scroll, BorderLayout.CENTER);
 
         add(derecho, BorderLayout.CENTER);
 
@@ -42,27 +56,27 @@ public class DashboardAdmin extends JPanel {
 
     private JPanel crearTopBar() {
         JPanel top = new JPanel(null);
-        top.setPreferredSize(new Dimension(0, 70));
+        top.setPreferredSize(new Dimension(CONTENT_WIDTH, 90));
         top.setBackground(BEIGE);
 
         JLabel titulo = new JLabel("Dashboard Administrativo");
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titulo.setBounds(15, 8, 350, 28);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 30));
+        titulo.setBounds(30, 12, 500, 36);
         top.add(titulo);
 
         JLabel fecha = new JLabel("Domingo, 7 de junio de 2026");
-        fecha.setBounds(15, 38, 250, 18);
-        fecha.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        fecha.setBounds(30, 52, 320, 22);
+        fecha.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         top.add(fecha);
 
         JLabel campana = new JLabel("🔔");
-        campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        campana.setBounds(910, 20, 30, 30);
+        campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+        campana.setBounds(CONTENT_WIDTH - 260, 28, 36, 36);
         top.add(campana);
 
         JLabel perfil = new JLabel("👤 Administrador");
-        perfil.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        perfil.setBounds(790, 24, 150, 22);
+        perfil.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        perfil.setBounds(CONTENT_WIDTH - 210, 30, 180, 26);
         top.add(perfil);
 
         return top;
@@ -73,22 +87,30 @@ public class DashboardAdmin extends JPanel {
     private JPanel crearContenido() {
         JPanel contenido = new JPanel(null);
         contenido.setBackground(Color.WHITE);
+        contenido.setPreferredSize(new Dimension(CONTENT_WIDTH, SCREEN_HEIGHT - 90));
 
-        JPanel tarjetaUsuarios = crearTarjeta("Resumen de Usuario", "...", "Usuarios", CARD1, 100, 70);
+        int cardW = 340, cardH = 160;
+        int y1 = 40;
+        int x1 = 60;
+        int x2 = (CONTENT_WIDTH - cardW) / 2;
+        int x3 = CONTENT_WIDTH - cardW - 60;
+
+        JPanel tarjetaUsuarios = crearTarjeta("Resumen de Usuario", "...", "Usuarios", CARD1, x1, y1, cardW, cardH);
         valorUsuarios = (JLabel) tarjetaUsuarios.getClientProperty("valor");
         contenido.add(tarjetaUsuarios);
 
-        JPanel tarjetaOfertas = crearTarjeta("Ofertas De Empleo", "...", "Activas", CARD2, 420, 70);
+        JPanel tarjetaOfertas = crearTarjeta("Ofertas De Empleo", "...", "Activas", CARD2, x2, y1, cardW, cardH);
         valorOfertas = (JLabel) tarjetaOfertas.getClientProperty("valor");
         contenido.add(tarjetaOfertas);
 
-        JPanel tarjetaComunicaciones = crearTarjeta("Comunicaciones", "...", "Enviadas", CARD3, 740, 70);
+        JPanel tarjetaComunicaciones = crearTarjeta("Comunicaciones", "...", "Enviadas", CARD3, x3, y1, cardW, cardH);
         valorComunicaciones = (JLabel) tarjetaComunicaciones.getClientProperty("valor");
         contenido.add(tarjetaComunicaciones);
 
         // Botón de recarga manual (útil si otro admin agrega datos mientras la ventana está abierta)
         JButton btnActualizar = new JButton("Actualizar Datos");
-        btnActualizar.setBounds(100, 175, 160, 30);
+        btnActualizar.setBounds(x1, y1 + cardH + 25, 200, 40);
+        btnActualizar.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnActualizar.setBackground(COLOR_MENU);
         btnActualizar.setForeground(Color.WHITE);
         btnActualizar.setBorderPainted(false);
@@ -96,17 +118,20 @@ public class DashboardAdmin extends JPanel {
         btnActualizar.addActionListener(e -> cargarDatosDashboard());
         contenido.add(btnActualizar);
 
-        // Gráfica usuarios
+        // Graficas ocupan el ancho disponible dividido en dos, con mas alto para aprovechar 1080px
+        int graficaY = y1 + cardH + 90;
+        int graficaH = 480;
+        int graficaW = (CONTENT_WIDTH - 60 - 60 - 30) / 2; // margen izq/der + separación entre las dos
+
         JPanel grafica1 = new JPanel();
-        grafica1.setBounds(100, 220, 290, 200);
+        grafica1.setBounds(x1, graficaY, graficaW, graficaH);
         grafica1.setBorder(new LineBorder(Color.GRAY));
         grafica1.setBackground(Color.WHITE);
         grafica1.add(new JLabel("Usuarios"));
         contenido.add(grafica1);
 
-        // Gráfica empleos
         JPanel grafica2 = new JPanel();
-        grafica2.setBounds(470, 220, 290, 200);
+        grafica2.setBounds(x1 + graficaW + 30, graficaY, graficaW, graficaH);
         grafica2.setBorder(new LineBorder(Color.GRAY));
         grafica2.setBackground(Color.WHITE);
         grafica2.add(new JLabel("Ofertas de Empleo"));
@@ -118,25 +143,25 @@ public class DashboardAdmin extends JPanel {
     // ─── Tarjeta ─────────────────────────────────────────────────────────────
 
     private JPanel crearTarjeta(String titulo, String valorInicial, String subtitulo,
-                                 Color color, int x, int y) {
+                                 Color color, int x, int y, int w, int h) {
         JPanel panel = new JPanel(null);
-        panel.setBounds(x, y, 240, 130);
+        panel.setBounds(x, y, w, h);
         panel.setBackground(color);
         panel.setBorder(new LineBorder(Color.GRAY));
 
         JLabel t = new JLabel(titulo);
-        t.setBounds(10, 10, 200, 20);
-        t.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        t.setBounds(15, 12, w - 30, 24);
+        t.setFont(new Font("Segoe UI", Font.BOLD, 18));
         panel.add(t);
 
         JLabel v = new JLabel(valorInicial);
-        v.setBounds(10, 30, 140, 60);
-        v.setFont(new Font("Segoe UI", Font.BOLD, 52));
+        v.setBounds(15, 40, w - 30, 70);
+        v.setFont(new Font("Segoe UI", Font.BOLD, 60));
         panel.add(v);
 
         JLabel s = new JLabel(subtitulo);
-        s.setBounds(12, 100, 100, 20);
-        s.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        s.setBounds(17, h - 30, 120, 22);
+        s.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         panel.add(s);
 
         // Guardamos referencia al JLabel del valor para poder actualizarlo luego

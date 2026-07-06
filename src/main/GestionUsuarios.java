@@ -9,11 +9,18 @@ import java.sql.*;
 public class GestionUsuarios extends JPanel {
 
     // Paleta oficial del proyecto
-    private final Color BEIGE      = new Color(0xD4, 0xCD, 0xC5); // #D4CDC5
+    private final Color BEIGE = new Color(0xD4, 0xCD, 0xC5); // #D4CDC5
     private final Color AZUL_CLARO = new Color(0x5B, 0x88, 0xA5); // #5B88A5
     private final Color COLOR_MENU = new Color(0x24, 0x3A, 0x69); // #243A69
-    private final Color MORADO     = new Color(0x9B, 0x73, 0xA6); // #9B73A6
+    private final Color MORADO = new Color(0x9B, 0x73, 0xA6); // #9B73A6
     private final Color GRIS_FILAS = new Color(245, 245, 245);
+
+    // Ancho del sidebar (debe coincidir con el usado por SidebarAdmin en el resto de las interfaces)
+    private final int SIDEBAR_WIDTH = 220;
+    // Resolución objetivo
+    private final int SCREEN_WIDTH = 1920;
+    private final int SCREEN_HEIGHT = 1080;
+    private final int CONTENT_WIDTH = SCREEN_WIDTH - SIDEBAR_WIDTH; // 1690
 
     private DefaultTableModel modeloTabla;
     private JTable tabla;
@@ -23,8 +30,11 @@ public class GestionUsuarios extends JPanel {
         this.app = app;
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
+        setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
 
         // ── Diseño común: Sidebar y Topbar iguales al resto de la interfaz ──
+        // (mismo componente SidebarAdmin que usa DashboardAdmin, así los botones
+        // de la izquierda quedan unificados en toda la aplicación)
         add(new SidebarAdmin(app, "gestionUsuarios"), BorderLayout.WEST);
 
         JPanel derecho = new JPanel(new BorderLayout());
@@ -56,27 +66,27 @@ public class GestionUsuarios extends JPanel {
 
     private JPanel crearTopBar() {
         JPanel top = new JPanel(null);
-        top.setPreferredSize(new Dimension(0, 70));
+        top.setPreferredSize(new Dimension(CONTENT_WIDTH, 90));
         top.setBackground(BEIGE);
 
         JLabel titulo = new JLabel("Gestión de Usuarios");
-        titulo.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titulo.setBounds(15, 8, 350, 28);
+        titulo.setFont(new Font("Segoe UI", Font.BOLD, 30));
+        titulo.setBounds(30, 12, 500, 36);
         top.add(titulo);
 
         JLabel fecha = new JLabel("Domingo, 7 de junio de 2026");
-        fecha.setBounds(15, 38, 250, 18);
-        fecha.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        fecha.setBounds(30, 52, 320, 22);
+        fecha.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         top.add(fecha);
 
         JLabel campana = new JLabel("🔔");
-        campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        campana.setBounds(910, 20, 30, 30);
+        campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+        campana.setBounds(CONTENT_WIDTH - 260, 28, 36, 36);
         top.add(campana);
 
         JLabel perfil = new JLabel("👤");
-        perfil.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        perfil.setBounds(945, 20, 30, 30);
+        perfil.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+        perfil.setBounds(CONTENT_WIDTH - 210, 28, 36, 36);
         top.add(perfil);
 
         return top;
@@ -87,20 +97,23 @@ public class GestionUsuarios extends JPanel {
     private JPanel crearContenido() {
         JPanel principal = new JPanel(null);
         principal.setBackground(Color.WHITE);
+        principal.setPreferredSize(new Dimension(CONTENT_WIDTH, SCREEN_HEIGHT - 90));
 
         // Filtros
         JLabel lblRol = new JLabel("Filtrar por Rol");
-        lblRol.setBounds(20, 20, 110, 30);
-        lblRol.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblRol.setBounds(30, 30, 140, 34);
+        lblRol.setFont(new Font("Segoe UI", Font.BOLD, 16));
         principal.add(lblRol);
 
         JComboBox<String> comboRol = new JComboBox<>(
                 new String[]{"Todos", "trabajador", "reclutador", "admin"});
-        comboRol.setBounds(135, 20, 120, 30);
+        comboRol.setBounds(180, 30, 160, 34);
+        comboRol.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         principal.add(comboRol);
 
         JButton btnFiltrar = new JButton("Filtrar");
-        btnFiltrar.setBounds(270, 20, 90, 30);
+        btnFiltrar.setBounds(360, 30, 110, 34);
+        btnFiltrar.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnFiltrar.setBackground(COLOR_MENU);
         btnFiltrar.setForeground(Color.WHITE);
         btnFiltrar.setBorderPainted(false);
@@ -109,7 +122,8 @@ public class GestionUsuarios extends JPanel {
 
         // Botones de edición / eliminación (subclases de edición pedidas)
         JButton btnEditar = new JButton("Editar Usuario");
-        btnEditar.setBounds(380, 20, 150, 30);
+        btnEditar.setBounds(500, 30, 190, 34);
+        btnEditar.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnEditar.setBackground(MORADO);
         btnEditar.setForeground(Color.WHITE);
         btnEditar.setBorderPainted(false);
@@ -117,7 +131,8 @@ public class GestionUsuarios extends JPanel {
         principal.add(btnEditar);
 
         JButton btnEliminar = new JButton("Eliminar");
-        btnEliminar.setBounds(545, 20, 100, 30);
+        btnEliminar.setBounds(720, 30, 130, 34);
+        btnEliminar.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnEliminar.setBackground(AZUL_CLARO);
         btnEliminar.setForeground(Color.WHITE);
         btnEliminar.setBorderPainted(false);
@@ -126,7 +141,8 @@ public class GestionUsuarios extends JPanel {
 
         // Botón de creación (Create del CRUD) — segunda fila de acciones
         JButton btnNuevo = new JButton("+ Nuevo Usuario");
-        btnNuevo.setBounds(20, 60, 170, 30);
+        btnNuevo.setBounds(30, 80, 210, 36);
+        btnNuevo.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btnNuevo.setBackground(BEIGE);
         btnNuevo.setForeground(COLOR_MENU);
         btnNuevo.setBorderPainted(false);
@@ -134,22 +150,26 @@ public class GestionUsuarios extends JPanel {
         principal.add(btnNuevo);
 
         // Panel tabla (desplazado hacia abajo para dar espacio al botón "Nuevo Usuario")
+        int tablaY = 135;
+        int tablaW = CONTENT_WIDTH - 60;
+        int tablaH = SCREEN_HEIGHT - 90 - tablaY - 40;
+
         JPanel panelTabla = new JPanel(null);
-        panelTabla.setBounds(15, 100, 970, 525);
+        panelTabla.setBounds(30, tablaY, tablaW, tablaH);
 
         // Encabezado morado
         JPanel encabezado = new JPanel(null);
-        encabezado.setBounds(0, 0, 970, 38);
+        encabezado.setBounds(0, 0, tablaW, 44);
         encabezado.setBackground(MORADO);
 
         JLabel lista = new JLabel("Lista de Usuarios");
         lista.setForeground(Color.WHITE);
-        lista.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        lista.setBounds(15, 7, 220, 24);
+        lista.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lista.setBounds(15, 9, 250, 26);
         encabezado.add(lista);
 
         JTextField buscar = new JTextField();
-        buscar.setBounds(750, 7, 210, 24);
+        buscar.setBounds(tablaW - 280, 8, 260, 28);
         buscar.setToolTipText("Buscar...");
         encabezado.add(buscar);
 
@@ -162,9 +182,9 @@ public class GestionUsuarios extends JPanel {
         };
 
         tabla = new JTable(modeloTabla);
-        tabla.setRowHeight(28);
-        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        tabla.setRowHeight(32);
+        tabla.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabla.getTableHeader().setBackground(new Color(220, 220, 220));
         tabla.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
@@ -178,7 +198,7 @@ public class GestionUsuarios extends JPanel {
         });
 
         JScrollPane scroll = new JScrollPane(tabla);
-        scroll.setBounds(0, 38, 970, 522);
+        scroll.setBounds(0, 44, tablaW, tablaH - 44);
         panelTabla.add(scroll);
 
         principal.add(panelTabla);
@@ -216,8 +236,8 @@ public class GestionUsuarios extends JPanel {
         String sql = "SELECT id, nombre, apellido, email, rol, creado_en "
                    + "FROM usuarios ORDER BY creado_en DESC";
         try (Connection con = ConexionDB.getConexion();
-             Statement st  = con.createStatement();
-             ResultSet rs  = st.executeQuery(sql)) {
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
             boolean hayDatos = false;
             while (rs.next()) {
                 hayDatos = true;
@@ -320,11 +340,11 @@ public class GestionUsuarios extends JPanel {
             return;
         }
 
-        String id       = (String) modeloTabla.getValueAt(fila, 0);
-        String nombre   = (String) modeloTabla.getValueAt(fila, 1);
+        String id = (String) modeloTabla.getValueAt(fila, 0);
+        String nombre = (String) modeloTabla.getValueAt(fila, 1);
         String apellido = (String) modeloTabla.getValueAt(fila, 2);
-        String correo   = (String) modeloTabla.getValueAt(fila, 3);
-        String rol      = (String) modeloTabla.getValueAt(fila, 4);
+        String correo = (String) modeloTabla.getValueAt(fila, 3);
+        String rol = (String) modeloTabla.getValueAt(fila, 4);
 
         Window ventana = SwingUtilities.getWindowAncestor(this);
         Frame owner = (ventana instanceof Frame) ? (Frame) ventana : null;
