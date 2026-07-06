@@ -6,7 +6,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.RenderingHints;
- 
+
 /*
  * Colores institucionales (Sección 3.2):
  *   Naranja claro  #D4CDC5
@@ -14,24 +14,24 @@ import java.awt.RenderingHints;
  *   Azul oscuro    #243A69
  *   Lavanda apagado #9B73A6
  */
-public class DashboardModerador extends JFrame {
-    
+public class DashboardModerador extends JPanel {
+
     // ═══════ PALETA INSTITUCIONAL (Manual 3.2) ═══════
     static final Color AZUL_OSCURO  = new Color(0x24, 0x3A, 0x69);
     static final Color CELESTE      = new Color(0x5B, 0x88, 0xA5);
     static final Color NARANJA_CLARO= new Color(0xD4, 0xCD, 0xC5);
     static final Color LAVANDA      = new Color(0x9B, 0x73, 0xA6);
- 
+
     // Secundarios (Manual 3.2)
     static final Color SEC_AZUL     = new Color(0x20, 0x33, 0x5B);
     static final Color SEC_CELESTE  = new Color(0x53, 0x7B, 0x94);
     static final Color SEC_LAVANDA  = new Color(0x84, 0x64, 0x8D);
- 
+
     // Complementarios (Manual 3.3) — uso limitado ≤20%
     static final Color MUSTAR       = new Color(0xFD, 0xBD, 0x2D);
     static final Color VERDE_MENTA  = new Color(0x5C, 0xE1, 0xE6);
     static final Color TURQUOISE    = new Color(0x00, 0xA4, 0xBD);
- 
+
     // Neutros y estados
     static final Color FONDO_PAGINA = new Color(0xF0, 0xEE, 0xE9);
     static final Color FONDO_CARD   = Color.WHITE;
@@ -42,7 +42,7 @@ public class DashboardModerador extends JFrame {
     static final Color EXITO        = new Color(0x2E, 0x9E, 0x6E);
     static final Color ALERTA       = new Color(0xD4, 0x92, 0x0A);
     static final Color PELIGRO      = new Color(0xC0, 0x39, 0x2B);
- 
+
     // ═══════ TIPOGRAFÍA (Manual 2.1 — Poppins / Aileron → fallback SansSerif) ═══════
     static final Font FONT_TITULO    = new Font("SansSerif", Font.BOLD,   14);
     static final Font FONT_SUBTIT    = new Font("SansSerif", Font.BOLD,   12);
@@ -54,21 +54,132 @@ public class DashboardModerador extends JFrame {
     static final Font FONT_NAV_ACT   = new Font("SansSerif", Font.BOLD,   12);
     static final Font FONT_BTN       = new Font("SansSerif", Font.BOLD,   10);
     static final Font FONT_BRAND     = new Font("SansSerif", Font.BOLD,   16);
- 
-    public DashboardModerador() {
-        setTitle("WorkBridge — Dashboard Moderador");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1280, 800);
-        setMinimumSize(new Dimension(1100, 700));
-        setLocationRelativeTo(null);
+
+    // Referencia a la app para navegación (CardLayout) y sesión
+    private final WorkBridgeApp app;
+
+    // Referencias para navegación interna (scroll a secciones)
+    private JScrollPane scrollContenido;
+    private JPanel panelReportes;
+    private JPanel panelGrafico;
+    private DefaultTableModel modeloUsuarios;
+    private DefaultTableModel modeloVacantes;
+
+    public DashboardModerador(WorkBridgeApp app) {
+        this.app = app;
         setBackground(FONDO_PAGINA);
- 
+
         // Layout principal: sidebar + contenido
         setLayout(new BorderLayout());
         add(buildSidebar(), BorderLayout.WEST);
         add(buildMain(),    BorderLayout.CENTER);
     }
- 
+
+    // ═══════════════════════════════════════════
+    //  NAVEGACIÓN — conecta el sidebar con WorkBridgeApp
+    // ═══════════════════════════════════════════
+    private void navegarA(String destino) {
+        if (destino == null || destino.isEmpty() || destino.equals("dashboardModerador")) {
+            return; // Ya estamos en el dashboard
+        }
+        if (destino.equals("CONFIG")) {
+            mostrarConfiguracion();
+            return;
+        }
+        if (destino.startsWith("SCROLL:")) {
+            String seccion = destino.substring(7);
+            JPanel objetivo = seccion.equals("reportes") ? panelReportes
+                             : seccion.equals("grafico")  ? panelGrafico
+                             : null;
+            if (objetivo != null) {
+                SwingUtilities.invokeLater(() -> objetivo.scrollRectToVisible(
+                        new Rectangle(0, 0, objetivo.getWidth(), objetivo.getHeight())));
+            }
+            return;
+        }
+        if (app != null) {
+            app.mostrarPantalla(destino);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Pantalla no disponible en modo de prueba: " + destino);
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    //  BÚSQUEDA — barra superior
+    // ═══════════════════════════════════════════
+    private void ejecutarBusqueda(String texto) {
+        if (texto == null || texto.isBlank() || texto.equals("Buscar...")) return;
+        String q = texto.trim().toLowerCase();
+
+        int coincidenciasUsuarios = 0;
+        if (modeloUsuarios != null) {
+            for (int r = 0; r < modeloUsuarios.getRowCount(); r++) {
+                String nombre = String.valueOf(modeloUsuarios.getValueAt(r, 0)).toLowerCase();
+                String email  = String.valueOf(modeloUsuarios.getValueAt(r, 1)).toLowerCase();
+                if (nombre.contains(q) || email.contains(q)) coincidenciasUsuarios++;
+            }
+        }
+        int coincidenciasVacantes = 0;
+        if (modeloVacantes != null) {
+            for (int r = 0; r < modeloVacantes.getRowCount(); r++) {
+                String tituloV  = String.valueOf(modeloVacantes.getValueAt(r, 0)).toLowerCase();
+                String empresaV = String.valueOf(modeloVacantes.getValueAt(r, 1)).toLowerCase();
+                if (tituloV.contains(q) || empresaV.contains(q)) coincidenciasVacantes++;
+            }
+        }
+
+        if (coincidenciasUsuarios == 0 && coincidenciasVacantes == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "No se encontraron resultados para \"" + texto + "\".",
+                    "Buscar", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        StringBuilder msg = new StringBuilder("Resultados para \"" + texto + "\":\n");
+        if (coincidenciasUsuarios > 0) msg.append("• ").append(coincidenciasUsuarios).append(" usuario(s)\n");
+        if (coincidenciasVacantes > 0) msg.append("• ").append(coincidenciasVacantes).append(" vacante(s)\n");
+        JOptionPane.showMessageDialog(this, msg.toString(),
+                "Resultados de búsqueda", JOptionPane.INFORMATION_MESSAGE);
+
+        if (coincidenciasUsuarios > 0) navegarA("gestionUsuarios");
+        else navegarA("publicaciones");
+    }
+
+    private void mostrarConfiguracion() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(6, 4, 4, 4));
+
+        JLabel titulo = new JLabel("Preferencias de moderación");
+        titulo.setFont(FONT_SUBTIT);
+        titulo.setForeground(AZUL_OSCURO);
+        titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JCheckBox chkEmail   = new JCheckBox("Recibir notificaciones por correo", true);
+        JCheckBox chkAlertas = new JCheckBox("Alertarme de reportes de alta prioridad", true);
+        JCheckBox chkResumen = new JCheckBox("Enviarme un resumen diario de actividad", false);
+        for (JCheckBox chk : new JCheckBox[]{chkEmail, chkAlertas, chkResumen}) {
+            chk.setAlignmentX(Component.LEFT_ALIGNMENT);
+            chk.setOpaque(false);
+        }
+
+        panel.add(titulo);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(chkEmail);
+        panel.add(chkAlertas);
+        panel.add(chkResumen);
+
+        int resultado = JOptionPane.showConfirmDialog(this, panel,
+                "Configuración del Moderador",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (resultado == JOptionPane.OK_OPTION) {
+            JOptionPane.showMessageDialog(this,
+                    "Preferencias guardadas correctamente.",
+                    "Configuración", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
     // ═══════════════════════════════════════════
     //  SIDEBAR — fondo azul oscuro (neg. logo)
     // ═══════════════════════════════════════════
@@ -97,32 +208,36 @@ public class DashboardModerador extends JFrame {
         sidebar.setPreferredSize(new Dimension(220, 0));
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
- 
+
         // BRAND
         sidebar.add(buildBrand());
         sidebar.add(Box.createVerticalStrut(8));
- 
+
         // NAV grupos
+        // Cada fila: {icono, texto, meta, destino}
+        // destino puede ser: una clave de pantalla registrada en WorkBridgeApp,
+        // "SCROLL:<panel>" para desplazarse a una sección del propio dashboard,
+        // o "CONFIG" para abrir el diálogo de configuración.
         sidebar.add(buildNavGroup("PRINCIPAL", new String[][]{
-            {"⊞", "Dashboard",      "activo"},
-            {"⚠", "Reportes",       "badge:12"},
+            {"⊞", "Dashboard",      "activo",   "dashboardModerador"},
+            {"⚠", "Reportes",       "badge:12", "SCROLL:reportes"},
         }));
         sidebar.add(buildNavGroup("MODERACIÓN", new String[][]{
-            {"◎", "Usuarios",       "badge:3"},
-            {"▣", "Empresas",       ""},
-            {"⊟", "Vacantes",       ""},
-            {"◱", "Comunicaciones", "badge:5"},
+            {"◎", "Usuarios",       "badge:3",  "gestionUsuarios"},
+            {"▣", "Empresas",       "",         "empresas"},
+            {"⊟", "Vacantes",       "",         "publicaciones"},
+            {"◱", "Comunicaciones", "badge:5",  "comunicaciones"},
         }));
         sidebar.add(buildNavGroup("SISTEMA", new String[][]{
-            {"◈", "Estadísticas",   ""},
-            {"⚙", "Configuración",  ""},
+            {"◈", "Estadísticas",   "",         "SCROLL:grafico"},
+            {"⚙", "Configuración",  "",         "CONFIG"},
         }));
- 
+
         sidebar.add(Box.createVerticalGlue());
         sidebar.add(buildSidebarFooter());
         return sidebar;
     }
- 
+
    private JPanel buildBrand() {
     JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0)) {
         @Override protected void paintComponent(Graphics g) {
@@ -176,14 +291,14 @@ public class DashboardModerador extends JFrame {
         g.dispose();
         return new ImageIcon(img);
     }
- 
+
     private JPanel buildNavGroup(String label, String[][] items) {
         JPanel group = new JPanel();
         group.setOpaque(false);
         group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
         group.setBorder(BorderFactory.createEmptyBorder(12, 0, 0, 0));
         group.setMaximumSize(new Dimension(Integer.MAX_VALUE, 999));
- 
+
         // Etiqueta de sección
         JLabel lbl = new JLabel("  " + label);
         lbl.setFont(FONT_LABEL);
@@ -191,17 +306,18 @@ public class DashboardModerador extends JFrame {
         lbl.setBorder(BorderFactory.createEmptyBorder(0, 12, 4, 0));
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         group.add(lbl);
- 
+
         for (String[] item : items) {
-            group.add(buildNavItem(item[0], item[1], item[2]));
+            String destino = item.length > 3 ? item[3] : null;
+            group.add(buildNavItem(item[0], item[1], item[2], destino));
         }
         return group;
     }
- 
-    private JPanel buildNavItem(String icon, String text, String meta) {
+
+    private JPanel buildNavItem(String icon, String text, String meta, String destino) {
         boolean activo = meta.equals("activo");
         String badge = meta.startsWith("badge:") ? meta.substring(6) : null;
- 
+
         JPanel row = new JPanel(new BorderLayout()) {
             boolean hovered = false;
             { // init block
@@ -211,15 +327,8 @@ public class DashboardModerador extends JFrame {
                     @Override public void mouseEntered(MouseEvent e) { hovered=true; repaint(); }
                     @Override public void mouseExited(MouseEvent e)  { hovered=false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
-                        // Marcar activo
-                        Container p = getParent();
-                        while (p != null && !(p instanceof JFrame)) {
-                            for (Component c : p.getComponents()) {
-                                if (c instanceof JPanel) c.repaint();
-                            }
-                            p = p.getParent();
-                        }
                         repaint();
+                        navegarA(destino);
                     }
                 });
             }
@@ -240,12 +349,12 @@ public class DashboardModerador extends JFrame {
         };
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
         row.setBorder(BorderFactory.createEmptyBorder(2, 18, 2, 12));
- 
+
         JLabel iconL = new JLabel(icon + "  " + text);
         iconL.setFont(activo ? FONT_NAV_ACT : FONT_NAV);
         iconL.setForeground(activo ? Color.WHITE : new Color(255,255,255,130));
         row.add(iconL, BorderLayout.CENTER);
- 
+
         if (badge != null) {
             JLabel b = new JLabel(badge) {
                 @Override protected void paintComponent(Graphics g) {
@@ -265,7 +374,7 @@ public class DashboardModerador extends JFrame {
         }
         return row;
     }
- 
+
     private JPanel buildSidebarFooter() {
         JPanel p = new JPanel(new BorderLayout(10, 0)) {
             @Override protected void paintComponent(Graphics g) {
@@ -277,7 +386,7 @@ public class DashboardModerador extends JFrame {
         p.setOpaque(false);
         p.setBorder(BorderFactory.createEmptyBorder(12, 14, 16, 14));
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
- 
+
         // Avatar con degradado
         JLabel av = new JLabel("MR") {
             @Override protected void paintComponent(Graphics g) {
@@ -294,7 +403,7 @@ public class DashboardModerador extends JFrame {
         av.setHorizontalAlignment(SwingConstants.CENTER);
         av.setPreferredSize(new Dimension(32,32));
         av.setOpaque(false);
- 
+
         JPanel info = new JPanel();
         info.setOpaque(false);
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
@@ -306,12 +415,30 @@ public class DashboardModerador extends JFrame {
         rol.setForeground(new Color(212,205,197,130));
         info.add(nombre);
         info.add(rol);
- 
+
+        JLabel salir = new JLabel("Cerrar sesión");
+        salir.setFont(FONT_SMALL);
+        salir.setForeground(new Color(212,205,197,180));
+        salir.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        salir.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { salir.setForeground(Color.WHITE); }
+            @Override public void mouseExited(MouseEvent e)  { salir.setForeground(new Color(212,205,197,180)); }
+            @Override public void mouseClicked(MouseEvent e) {
+                int r = JOptionPane.showConfirmDialog(DashboardModerador.this,
+                        "¿Deseas cerrar la sesión?", "Cerrar sesión",
+                        JOptionPane.YES_NO_OPTION);
+                if (r == JOptionPane.YES_OPTION) {
+                    if (app != null) app.cerrarSesion();
+                }
+            }
+        });
+        info.add(salir);
+
         p.add(av, BorderLayout.WEST);
         p.add(info, BorderLayout.CENTER);
         return p;
     }
- 
+
     // ═══════════════════════════════════════════
     //  MAIN — topbar + contenido scroll
     // ═══════════════════════════════════════════
@@ -319,12 +446,12 @@ public class DashboardModerador extends JFrame {
         JPanel main = new JPanel(new BorderLayout());
         main.setBackground(FONDO_PAGINA);
         main.add(buildTopbar(), BorderLayout.NORTH);
- 
+
         JPanel content = new JPanel();
         content.setBackground(FONDO_PAGINA);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
- 
+
         content.add(buildKpiRow());
         content.add(Box.createVerticalStrut(14));
         content.add(buildFila1());
@@ -333,16 +460,17 @@ public class DashboardModerador extends JFrame {
         content.add(Box.createVerticalStrut(14));
         content.add(buildFila3());
         content.add(Box.createVerticalStrut(14));
- 
+
         JScrollPane scroll = new JScrollPane(content);
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         scroll.getVerticalScrollBar().setBackground(FONDO_PAGINA);
         scroll.setBackground(FONDO_PAGINA);
+        this.scrollContenido = scroll;
         main.add(scroll, BorderLayout.CENTER);
         return main;
     }
- 
+
     private JPanel buildTopbar() {
         JPanel bar = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
@@ -354,7 +482,7 @@ public class DashboardModerador extends JFrame {
         bar.setBackground(Color.WHITE);
         bar.setBorder(BorderFactory.createEmptyBorder(0, 22, 0, 22));
         bar.setPreferredSize(new Dimension(0, 56));
- 
+
         // Título
         JPanel left = new JPanel();
         left.setOpaque(false);
@@ -368,11 +496,11 @@ public class DashboardModerador extends JFrame {
         left.add(titulo);
         left.add(fecha);
         bar.add(left, BorderLayout.WEST);
- 
+
         // Acciones derecha
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         right.setOpaque(false);
- 
+
         // Buscador
         JPanel search = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0)) {
             @Override protected void paintComponent(Graphics g) {
@@ -395,9 +523,25 @@ public class DashboardModerador extends JFrame {
         searchField.setForeground(TEXTO_SUAVE);
         searchField.setBorder(null);
         searchField.setOpaque(false);
+        final String placeholder = "Buscar...";
+        searchField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override public void focusGained(java.awt.event.FocusEvent e) {
+                if (searchField.getText().equals(placeholder)) {
+                    searchField.setText("");
+                    searchField.setForeground(TEXTO_OSCURO);
+                }
+            }
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                if (searchField.getText().isBlank()) {
+                    searchField.setText(placeholder);
+                    searchField.setForeground(TEXTO_SUAVE);
+                }
+            }
+        });
+        searchField.addActionListener(e -> ejecutarBusqueda(searchField.getText()));
         search.add(searchIco);
         search.add(searchField);
- 
+
         // Chip moderador (degradado institucional)
         JLabel chip = new JLabel("MODERADOR") {
             @Override protected void paintComponent(Graphics g) {
@@ -413,13 +557,13 @@ public class DashboardModerador extends JFrame {
         chip.setForeground(Color.WHITE);
         chip.setBorder(BorderFactory.createEmptyBorder(5,12,5,12));
         chip.setOpaque(false);
- 
+
         right.add(search);
         right.add(chip);
         bar.add(right, BorderLayout.EAST);
         return bar;
     }
- 
+
     // ═══════════════════════════════════════════
     //  KPI ROW — 5 tarjetas
     // ═══════════════════════════════════════════
@@ -427,7 +571,7 @@ public class DashboardModerador extends JFrame {
         JPanel row = new JPanel(new GridLayout(1, 5, 12, 0));
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
- 
+
         row.add(buildKpi("TOTAL USUARIOS",     "1,847", "+23 esta semana",  AZUL_OSCURO, EXITO));
         row.add(buildKpi("EMPRESAS ACTIVAS",   "342",   "+8 este mes",      CELESTE,     EXITO));
         row.add(buildKpi("VACANTES PUBLICADAS","519",   "12 en revisión",   LAVANDA,     ALERTA));
@@ -435,7 +579,7 @@ public class DashboardModerador extends JFrame {
         row.add(buildKpi("ACCIONES HOY",       "38",    "+12% vs ayer",     EXITO,       EXITO));
         return row;
     }
- 
+
     private JPanel buildKpi(String label, String value, String sub,
                              Color accentTop, Color subColor) {
         JPanel card = new JPanel(new BorderLayout()) {
@@ -455,19 +599,19 @@ public class DashboardModerador extends JFrame {
         };
         card.setOpaque(false);
         card.setBorder(BorderFactory.createEmptyBorder(14, 14, 10, 14));
- 
+
         JLabel lbl = new JLabel(label);
         lbl.setFont(FONT_LABEL);
         lbl.setForeground(TEXTO_SUAVE);
- 
+
         JLabel val = new JLabel(value);
         val.setFont(FONT_KPI);
         val.setForeground(AZUL_OSCURO);
- 
+
         JLabel s = new JLabel(sub);
         s.setFont(FONT_SMALL);
         s.setForeground(subColor);
- 
+
         JPanel inner = new JPanel();
         inner.setOpaque(false);
         inner.setLayout(new BoxLayout(inner, BoxLayout.Y_AXIS));
@@ -479,7 +623,7 @@ public class DashboardModerador extends JFrame {
         card.add(inner, BorderLayout.CENTER);
         return card;
     }
- 
+
     // ═══════════════════════════════════════════
     //  FILA 1 — Reportes (70%) + Actividad (30%)
     // ═══════════════════════════════════════════
@@ -490,23 +634,27 @@ public class DashboardModerador extends JFrame {
         gc.fill = GridBagConstraints.BOTH;
         gc.gridy = 0; gc.weighty = 1;
         gc.insets = new Insets(0,0,0,12);
- 
+
         gc.gridx=0; gc.weightx=0.65;
         row.add(buildReportes(), gc);
         gc.gridx=1; gc.weightx=0.35; gc.insets=new Insets(0,0,0,0);
         row.add(buildActividad(), gc);
         return row;
     }
- 
+
     private JPanel buildReportes() {
         JPanel panel = buildPanel("⚠  Reportes Pendientes de Moderación",
-                                  "Requieren acción del moderador — ordenados por prioridad");
- 
+                                  "Requieren acción del moderador — ordenados por prioridad",
+                                  () -> JOptionPane.showMessageDialog(this,
+                                      "Bandeja completa de reportes: 12 pendientes en total.\n" +
+                                      "(4 de alta prioridad, 5 de media, 3 de baja).",
+                                      "Reportes de Moderación", JOptionPane.INFORMATION_MESSAGE));
+
         JPanel cuerpo = new JPanel();
         cuerpo.setOpaque(false);
         cuerpo.setLayout(new BoxLayout(cuerpo, BoxLayout.Y_AXIS));
         cuerpo.setBorder(BorderFactory.createEmptyBorder(10,14,14,14));
- 
+
         // Datos de reportes
         Object[][] data = {
             {"🚫", "Spam masivo — 'Ofertas Rápidas GT'",         "3 usuarios · hace 20 min", "Alta",  PELIGRO},
@@ -515,18 +663,19 @@ public class DashboardModerador extends JFrame {
             {"💬",  "Conducta inapropiada en entrevista virtual", "DataInsights · hace 3h",   "Media", ALERTA},
             {"📌",  "Empresa sin verificar publicando masivamente","Creative Web · hace 5h",  "Baja",  TEXTO_SUAVE},
         };
- 
+
         for (Object[] r : data) {
             cuerpo.add(buildReporteItem(
                 (String)r[0], (String)r[1], (String)r[2],
                 (String)r[3], (Color)r[4]));
             cuerpo.add(Box.createVerticalStrut(4));
         }
- 
+
         panel.add(cuerpo, BorderLayout.CENTER);
+        this.panelReportes = panel;
         return panel;
     }
- 
+
     private JPanel buildReporteItem(String ico, String titulo,
                                      String meta, String prioridad, Color prioColor) {
         JPanel item = new JPanel(new BorderLayout(8, 0)) {
@@ -547,7 +696,7 @@ public class DashboardModerador extends JFrame {
         };
         item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         item.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 4));
- 
+
         // Icono
         JLabel icoL = new JLabel(ico) {
             @Override protected void paintComponent(Graphics g) {
@@ -565,7 +714,7 @@ public class DashboardModerador extends JFrame {
         icoL.setHorizontalAlignment(SwingConstants.CENTER);
         icoL.setPreferredSize(new Dimension(34,34));
         icoL.setOpaque(false);
- 
+
         // Texto
         JPanel txt = new JPanel();
         txt.setOpaque(false);
@@ -578,27 +727,54 @@ public class DashboardModerador extends JFrame {
         m.setForeground(TEXTO_SUAVE);
         txt.add(tit);
         txt.add(m);
- 
+
         // Botones acción
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         btns.setOpaque(false);
-        btns.add(buildBtn("✓ Aprobar", EXITO));
-        btns.add(buildBtn("✕ Quitar", PELIGRO));
- 
+
+        JButton btnAprobar = buildBtn("✓ Aprobar", EXITO);
+        btnAprobar.addActionListener(e -> {
+            int r = JOptionPane.showConfirmDialog(this,
+                    "¿Marcar este reporte como resuelto?\n\"" + titulo + "\"",
+                    "Resolver reporte", JOptionPane.YES_NO_OPTION);
+            if (r == JOptionPane.YES_OPTION) {
+                Container padre = item.getParent();
+                if (padre != null) { padre.remove(item); padre.revalidate(); padre.repaint(); }
+            }
+        });
+
+        JButton btnQuitar = buildBtn("✕ Quitar", PELIGRO);
+        btnQuitar.addActionListener(e -> {
+            int r = JOptionPane.showConfirmDialog(this,
+                    "¿Eliminar el contenido reportado?\n\"" + titulo + "\"",
+                    "Quitar contenido", JOptionPane.YES_NO_OPTION);
+            if (r == JOptionPane.YES_OPTION) {
+                Container padre = item.getParent();
+                if (padre != null) { padre.remove(item); padre.revalidate(); padre.repaint(); }
+            }
+        });
+
+        btns.add(btnAprobar);
+        btns.add(btnQuitar);
+
         item.add(icoL, BorderLayout.WEST);
         item.add(txt,  BorderLayout.CENTER);
         item.add(btns, BorderLayout.EAST);
         return item;
     }
- 
+
     private JPanel buildActividad() {
-        JPanel panel = buildPanel("Actividad Reciente", "Últimas 24 horas");
- 
+        JPanel panel = buildPanel("Actividad Reciente", "Últimas 24 horas",
+                                  () -> JOptionPane.showMessageDialog(this,
+                                      "El historial completo de actividad estará disponible\n" +
+                                      "próximamente en la sección de Estadísticas.",
+                                      "Actividad Reciente", JOptionPane.INFORMATION_MESSAGE));
+
         JPanel cuerpo = new JPanel();
         cuerpo.setOpaque(false);
         cuerpo.setLayout(new BoxLayout(cuerpo, BoxLayout.Y_AXIS));
         cuerpo.setBorder(BorderFactory.createEmptyBorder(10,14,14,14));
- 
+
         Object[][] acts = {
             {"TechCorp S.A. verificada",              "hace 5 min",  EXITO},
             {"Vacante eliminada por fraude",           "hace 22 min", PELIGRO},
@@ -608,13 +784,13 @@ public class DashboardModerador extends JFrame {
             {"12 vacantes aprobadas (revisión masiva)","hace 3h",     EXITO},
             {"Nuevo reporte de spam asignado",         "hace 4h",     AZUL_OSCURO},
         };
- 
+
         for (Object[] a : acts) {
             JPanel row = new JPanel(new BorderLayout(8,0));
             row.setOpaque(false);
             row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
             row.setBorder(BorderFactory.createEmptyBorder(3,4,3,4));
- 
+
             // Punto de color
             JLabel dot = new JLabel() {
                 @Override protected void paintComponent(Graphics g) {
@@ -626,7 +802,7 @@ public class DashboardModerador extends JFrame {
             };
             dot.setPreferredSize(new Dimension(12,20));
             dot.setOpaque(false);
- 
+
             JPanel info = new JPanel();
             info.setOpaque(false);
             info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
@@ -638,16 +814,16 @@ public class DashboardModerador extends JFrame {
             hora.setForeground(TEXTO_SUAVE);
             info.add(text);
             info.add(hora);
- 
+
             row.add(dot, BorderLayout.WEST);
             row.add(info, BorderLayout.CENTER);
             cuerpo.add(row);
         }
- 
+
         panel.add(cuerpo, BorderLayout.CENTER);
         return panel;
     }
- 
+
     // ═══════════════════════════════════════════
     //  FILA 2 — Tabla usuarios + Vacantes/Gráfica
     // ═══════════════════════════════════════════
@@ -657,10 +833,10 @@ public class DashboardModerador extends JFrame {
         GridBagConstraints gc = new GridBagConstraints();
         gc.fill = GridBagConstraints.BOTH;
         gc.gridy = 0; gc.weighty = 1;
- 
+
         gc.gridx=0; gc.weightx=0.55; gc.insets=new Insets(0,0,0,12);
         row.add(buildUsuarios(), gc);
- 
+
         gc.gridx=1; gc.weightx=0.45; gc.insets=new Insets(0,0,0,0);
         JPanel right = new JPanel(new GridLayout(2,1,0,12));
         right.setOpaque(false);
@@ -669,11 +845,12 @@ public class DashboardModerador extends JFrame {
         row.add(right, gc);
         return row;
     }
- 
+
     private JPanel buildUsuarios() {
         JPanel panel = buildPanel("Gestión de Usuarios",
-                                  "Usuarios con actividad reciente o pendientes");
- 
+                                  "Usuarios con actividad reciente o pendientes",
+                                  () -> navegarA("gestionUsuarios"));
+
         String[] cols = {"Usuario","Email","Tipo","Estado","Últ. acceso",""};
         Object[][] data = {
             {"María Rodas",    "m.rodas@gmail.com",  "Trabajador","Activo",   "04/06/2025", "Ver"},
@@ -682,10 +859,11 @@ public class DashboardModerador extends JFrame {
             {"Dilan Chitun",   "dilan.c@gmail.com",  "Empresa",   "Revisión", "01/05/2025", "Aprobar"},
             {"Ana Patrus",     "ana.p@gmail.com",    "Trabajador","Activo",   "04/06/2025", "Ver"},
         };
- 
+
         DefaultTableModel model = new DefaultTableModel(data, cols) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override public boolean isCellEditable(int r, int c) { return c == 5; }
         };
+        this.modeloUsuarios = model;
         JTable table = new JTable(model) {
             @Override public Component prepareRenderer(TableCellRenderer r, int row, int col) {
                 Component c = super.prepareRenderer(r, row, col);
@@ -704,7 +882,7 @@ public class DashboardModerador extends JFrame {
         table.getTableHeader().setBackground(FONDO_PAGINA);
         table.getTableHeader().setBorder(BorderFactory.createMatteBorder(0,0,1,0,BORDE));
         table.setSelectionBackground(new Color(234,241,247));
- 
+
         // Colorear columna Estado
         table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override public Component getTableCellRendererComponent(JTable t, Object v,
@@ -724,17 +902,50 @@ public class DashboardModerador extends JFrame {
                 return lbl;
             }
         });
- 
+
+        // Columna de acción (Ver / Suspender / Aprobar) con botón funcional
+        instalarColumnaAccion(table, 5, (row, accion) -> {
+            String usuario = String.valueOf(model.getValueAt(row, 0));
+            switch (accion) {
+                case "Ver" -> JOptionPane.showMessageDialog(this,
+                        "Usuario: " + usuario +
+                        "\nEmail: " + model.getValueAt(row, 1) +
+                        "\nTipo: " + model.getValueAt(row, 2) +
+                        "\nÚlt. acceso: " + model.getValueAt(row, 4),
+                        "Detalle de usuario", JOptionPane.INFORMATION_MESSAGE);
+                case "Suspender" -> {
+                    int r = JOptionPane.showConfirmDialog(this,
+                            "¿Suspender la cuenta de " + usuario + "?",
+                            "Suspender usuario", JOptionPane.YES_NO_OPTION);
+                    if (r == JOptionPane.YES_OPTION) {
+                        model.setValueAt("Inactivo", row, 3);
+                        model.setValueAt("Ver", row, 5);
+                    }
+                }
+                case "Aprobar" -> {
+                    int r = JOptionPane.showConfirmDialog(this,
+                            "¿Aprobar la cuenta de " + usuario + "?",
+                            "Aprobar usuario", JOptionPane.YES_NO_OPTION);
+                    if (r == JOptionPane.YES_OPTION) {
+                        model.setValueAt("Activo", row, 3);
+                        model.setValueAt("Ver", row, 5);
+                    }
+                }
+                default -> {}
+            }
+        });
+
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(null);
         sp.setBackground(Color.WHITE);
         panel.add(sp, BorderLayout.CENTER);
         return panel;
     }
- 
+
     private JPanel buildVacantes() {
-        JPanel panel = buildPanel("Vacantes en Revisión", "12 pendientes de aprobación");
- 
+        JPanel panel = buildPanel("Vacantes en Revisión", "12 pendientes de aprobación",
+                                  () -> navegarA("publicaciones"));
+
         String[] cols = {"Vacante","Empresa","Estado",""};
         Object[][] data = {
             {"Dev. Java Backend","TechCore",    "Revisión",  "✓"},
@@ -743,8 +954,9 @@ public class DashboardModerador extends JFrame {
             {"Dev. Mobile iOS",  "AppStudio",   "Revisión",  "✓"},
         };
         DefaultTableModel model = new DefaultTableModel(data, cols){
-            @Override public boolean isCellEditable(int r,int c){return false;}
+            @Override public boolean isCellEditable(int r,int c){return c == 3;}
         };
+        this.modeloVacantes = model;
         JTable t = new JTable(model);
         t.setFont(FONT_BODY); t.setRowHeight(28);
         t.setShowGrid(false); t.setIntercellSpacing(new Dimension(0,0));
@@ -752,32 +964,55 @@ public class DashboardModerador extends JFrame {
         t.getTableHeader().setForeground(TEXTO_SUAVE);
         t.getTableHeader().setBackground(FONDO_PAGINA);
         t.setBackground(Color.WHITE);
- 
+
+        // Columna de acción (✓ Aprobar / 👁 Ver detalle) con botón funcional
+        instalarColumnaAccion(t, 3, (row, accion) -> {
+            String vacante = String.valueOf(model.getValueAt(row, 0));
+            String empresa = String.valueOf(model.getValueAt(row, 1));
+            switch (accion) {
+                case "✓" -> {
+                    int r = JOptionPane.showConfirmDialog(this,
+                            "¿Aprobar la vacante \"" + vacante + "\" de " + empresa + "?",
+                            "Aprobar vacante", JOptionPane.YES_NO_OPTION);
+                    if (r == JOptionPane.YES_OPTION) {
+                        model.setValueAt("Aprobada", row, 2);
+                        model.setValueAt("👁", row, 3);
+                    }
+                }
+                case "👁" -> JOptionPane.showMessageDialog(this,
+                        "Vacante: " + vacante +
+                        "\nEmpresa: " + empresa +
+                        "\nEstado: " + model.getValueAt(row, 2),
+                        "Detalle de vacante", JOptionPane.INFORMATION_MESSAGE);
+                default -> {}
+            }
+        });
+
         JScrollPane sp = new JScrollPane(t);
         sp.setBorder(null);
         panel.add(sp, BorderLayout.CENTER);
         return panel;
     }
- 
+
     private JPanel buildGrafico() {
         JPanel panel = buildPanel("Crecimiento de Usuarios", "Ene — Jun 2026");
- 
+
         // Canvas de gráfico SVG-like con degradados institucionales
         JPanel canvas = new JPanel() {
             final int[] usuariosY = {68,62,50,42,24,16,4};
             final int[] empresasY = {74,71,66,61,50,42,30};
             final String[] meses  = {"Ene","Feb","Mar","Abr","May","Jun","Jul"};
- 
+
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D)g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Color.WHITE);
                 g2.fillRect(0,0,getWidth(),getHeight());
- 
+
                 int w = getWidth(), h = getHeight();
                 int padL=30, padR=10, padT=8, padB=22;
                 int gw = w-padL-padR, gh = h-padT-padB;
- 
+
                 // Escalar puntos
                 int n = usuariosY.length;
                 int[] ux = new int[n]; int[] uy = new int[n];
@@ -788,7 +1023,7 @@ public class DashboardModerador extends JFrame {
                     ex[i] = padL + (i*(gw/(n-1)));
                     ey[i] = padT + (int)(empresasY[i]/80.0 * gh);
                 }
- 
+
                 // Área usuarios — degradado azul oscuro (institucional 3.2)
                 GeneralPath areaU = new GeneralPath();
                 areaU.moveTo(ux[0], uy[0]);
@@ -799,7 +1034,7 @@ public class DashboardModerador extends JFrame {
                 GradientPaint gpU = new GradientPaint(0,padT,new Color(36,58,105,80),
                                                        0,padT+gh,new Color(36,58,105,0));
                 g2.setPaint(gpU); g2.fill(areaU);
- 
+
                 // Área empresas — degradado lavanda
                 GeneralPath areaE = new GeneralPath();
                 areaE.moveTo(ex[0], ey[0]);
@@ -810,18 +1045,18 @@ public class DashboardModerador extends JFrame {
                 GradientPaint gpE = new GradientPaint(0,padT,new Color(155,115,166,60),
                                                        0,padT+gh,new Color(155,115,166,0));
                 g2.setPaint(gpE); g2.fill(areaE);
- 
+
                 // Línea usuarios
                 g2.setColor(AZUL_OSCURO);
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                 for(int i=1;i<n;i++) g2.drawLine(ux[i-1],uy[i-1],ux[i],uy[i]);
- 
+
                 // Línea empresas (punteada)
                 g2.setColor(LAVANDA);
                 g2.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND,
                         BasicStroke.JOIN_ROUND, 0, new float[]{4,3}, 0));
                 for(int i=1;i<n;i++) g2.drawLine(ex[i-1],ey[i-1],ex[i],ey[i]);
- 
+
                 // Etiquetas eje X
                 g2.setColor(TEXTO_SUAVE);
                 g2.setFont(FONT_SMALL);
@@ -831,7 +1066,7 @@ public class DashboardModerador extends JFrame {
                     int lx = ux[i] - fm.stringWidth(meses[i])/2;
                     g2.drawString(meses[i], lx, h-5);
                 }
- 
+
                 // Leyenda
                 g2.setColor(AZUL_OSCURO);
                 g2.setStroke(new BasicStroke(2f));
@@ -847,9 +1082,10 @@ public class DashboardModerador extends JFrame {
         };
         canvas.setBackground(Color.WHITE);
         panel.add(canvas, BorderLayout.CENTER);
+        this.panelGrafico = panel;
         return panel;
     }
- 
+
     // ═══════════════════════════════════════════
     //  FILA 3 — Habilidades + Acciones rápidas
     // ═══════════════════════════════════════════
@@ -860,16 +1096,17 @@ public class DashboardModerador extends JFrame {
         row.add(buildAccionesRapidas());
         return row;
     }
- 
+
     private JPanel buildHabilidades() {
         JPanel panel = buildPanel("Candidatos por Habilidad",
-                                  "Tecnologías más demandadas esta semana");
- 
+                                  "Tecnologías más demandadas esta semana",
+                                  () -> navegarA("habilidades"));
+
         JPanel cuerpo = new JPanel();
         cuerpo.setOpaque(false);
         cuerpo.setLayout(new BoxLayout(cuerpo, BoxLayout.Y_AXIS));
         cuerpo.setBorder(BorderFactory.createEmptyBorder(12,14,14,14));
- 
+
         Object[][] skills = {
             {"React / Web", 82, AZUL_OSCURO, "41"},
             {"Python",      68, CELESTE,      "34"},
@@ -878,26 +1115,26 @@ public class DashboardModerador extends JFrame {
             {"SQL",         34, TURQUOISE,    "17"},
             {"Swift / iOS", 22, NARANJA_CLARO,"11"},
         };
- 
+
         for (Object[] sk : skills) {
             cuerpo.add(buildSkillRow((String)sk[0], (int)sk[1], (Color)sk[2], (String)sk[3]));
             cuerpo.add(Box.createVerticalStrut(8));
         }
- 
+
         panel.add(cuerpo, BorderLayout.CENTER);
         return panel;
     }
- 
+
     private JPanel buildSkillRow(String nombre, int pct, Color color, String count) {
         JPanel row = new JPanel(new BorderLayout(8,0));
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
- 
+
         JLabel lbl = new JLabel(nombre);
         lbl.setFont(new Font("SansSerif", Font.BOLD, 11));
         lbl.setForeground(TEXTO_OSCURO);
         lbl.setPreferredSize(new Dimension(100,16));
- 
+
         JPanel barWrap = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D)g;
@@ -911,27 +1148,27 @@ public class DashboardModerador extends JFrame {
         };
         barWrap.setOpaque(false);
         barWrap.setPreferredSize(new Dimension(0,16));
- 
+
         JLabel cnt = new JLabel(count);
         cnt.setFont(FONT_SMALL);
         cnt.setForeground(TEXTO_SUAVE);
         cnt.setPreferredSize(new Dimension(20,16));
         cnt.setHorizontalAlignment(SwingConstants.RIGHT);
- 
+
         row.add(lbl,     BorderLayout.WEST);
         row.add(barWrap, BorderLayout.CENTER);
         row.add(cnt,     BorderLayout.EAST);
         return row;
     }
- 
+
     private JPanel buildAccionesRapidas() {
         JPanel panel = buildPanel("Acciones Rápidas",
                                   "Herramientas de moderación directa");
- 
+
         JPanel grid = new JPanel(new GridLayout(3,2,8,8));
         grid.setOpaque(false);
         grid.setBorder(BorderFactory.createEmptyBorder(12,14,14,14));
- 
+
         String[][] acciones = {
             {"🔍","Auditar Empresas",   "3 pendientes"},
             {"📋","Revisar Vacantes",   "12 en cola"},
@@ -940,18 +1177,30 @@ public class DashboardModerador extends JFrame {
             {"✅","Verificar Empresa",  "Otorgar insignia"},
             {"📊","Generar Reporte",    "Exportar datos"},
         };
- 
+
+        Runnable[] callbacks = {
+            () -> navegarA("empresas"),
+            () -> navegarA("publicaciones"),
+            () -> navegarA("gestionUsuarios"),
+            () -> navegarA("comunicaciones"),
+            () -> navegarA("empresas"),
+            () -> JOptionPane.showMessageDialog(this,
+                    "Generando reporte de actividad de moderación...\n" +
+                    "El archivo se descargará como PDF en unos instantes.",
+                    "Generar Reporte", JOptionPane.INFORMATION_MESSAGE),
+        };
+
         for (int i=0; i<acciones.length; i++) {
             String[] a = acciones[i];
             boolean destacado = (i==5);
-            grid.add(buildAccionCard(a[0], a[1], a[2], destacado));
+            grid.add(buildAccionCard(a[0], a[1], a[2], destacado, callbacks[i]));
         }
- 
+
         panel.add(grid, BorderLayout.CENTER);
         return panel;
     }
- 
-    private JPanel buildAccionCard(String ico, String titulo, String sub, boolean destacado) {
+
+    private JPanel buildAccionCard(String ico, String titulo, String sub, boolean destacado, Runnable onClick) {
         JPanel card = new JPanel(new BorderLayout()) {
             boolean hover = false;
             {
@@ -961,6 +1210,7 @@ public class DashboardModerador extends JFrame {
                     @Override public void mouseEntered(MouseEvent e){hover=true;repaint();}
                     @Override public void mouseExited(MouseEvent e) {hover=false;repaint();}
                     @Override public void mousePressed(MouseEvent e) { repaint(); }
+                    @Override public void mouseClicked(MouseEvent e) { if (onClick != null) onClick.run(); }
                 });
             }
             @Override protected void paintComponent(Graphics g) {
@@ -981,32 +1231,36 @@ public class DashboardModerador extends JFrame {
             }
         };
         card.setBorder(BorderFactory.createEmptyBorder(10,12,10,12));
- 
+
         JLabel icoL = new JLabel(ico);
         icoL.setFont(new Font("SansSerif", Font.PLAIN, 18));
- 
+
         JLabel titL = new JLabel(titulo);
         titL.setFont(new Font("SansSerif", Font.BOLD, 11));
         titL.setForeground(destacado ? Color.WHITE : AZUL_OSCURO);
- 
+
         JLabel subL = new JLabel(sub);
         subL.setFont(FONT_SMALL);
         subL.setForeground(destacado ? new Color(255,255,255,160) : TEXTO_SUAVE);
- 
+
         JPanel txt = new JPanel();
         txt.setOpaque(false);
         txt.setLayout(new BoxLayout(txt, BoxLayout.Y_AXIS));
         txt.add(titL); txt.add(subL);
- 
+
         card.add(icoL, BorderLayout.NORTH);
         card.add(txt,  BorderLayout.CENTER);
         return card;
     }
- 
+
     // ═══════════════════════════════════════════
     //  UTILIDADES
     // ═══════════════════════════════════════════
     private JPanel buildPanel(String titulo, String sub) {
+        return buildPanel(titulo, sub, null);
+    }
+
+    private JPanel buildPanel(String titulo, String sub, Runnable onVerTodos) {
         JPanel panel = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D)g;
@@ -1019,7 +1273,7 @@ public class DashboardModerador extends JFrame {
             }
         };
         panel.setOpaque(false);
- 
+
         // Header
         JPanel head = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
@@ -1030,7 +1284,7 @@ public class DashboardModerador extends JFrame {
         };
         head.setOpaque(false);
         head.setBorder(BorderFactory.createEmptyBorder(11,14,9,14));
- 
+
         JPanel headLeft = new JPanel();
         headLeft.setOpaque(false);
         headLeft.setLayout(new BoxLayout(headLeft, BoxLayout.Y_AXIS));
@@ -1041,18 +1295,29 @@ public class DashboardModerador extends JFrame {
         subL.setFont(FONT_SMALL);
         subL.setForeground(TEXTO_SUAVE);
         headLeft.add(titL); headLeft.add(subL);
- 
+
         JLabel ver = new JLabel("Ver todos →");
         ver.setFont(FONT_LABEL);
         ver.setForeground(CELESTE);
-        ver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
- 
+        if (onVerTodos != null) {
+            ver.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            ver.addMouseListener(new MouseAdapter() {
+                @Override public void mouseEntered(MouseEvent e) { ver.setForeground(AZUL_OSCURO); }
+                @Override public void mouseExited(MouseEvent e)  { ver.setForeground(CELESTE); }
+                @Override public void mouseClicked(MouseEvent e) { onVerTodos.run(); }
+            });
+        }
+
         head.add(headLeft, BorderLayout.CENTER);
-        head.add(ver, BorderLayout.EAST);
+        // El enlace "Ver todos" solo se muestra si tiene una acción real asociada;
+        // si no, se omite para no dejar un texto que aparente ser clicable sin serlo.
+        if (onVerTodos != null) {
+            head.add(ver, BorderLayout.EAST);
+        }
         panel.add(head, BorderLayout.NORTH);
         return panel;
     }
- 
+
     private JButton buildBtn(String texto, Color bg) {
         JButton btn = new JButton(texto) {
             @Override protected void paintComponent(Graphics g) {
@@ -1072,22 +1337,71 @@ public class DashboardModerador extends JFrame {
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return btn;
     }
- 
+
     // ═══════════════════════════════════════════
-    //  MAIN
+    //  COLUMNA DE ACCIÓN — convierte texto de una celda
+    //  en un botón real dentro de un JTable
+    // ═══════════════════════════════════════════
+    private JButton crearBotonAccion(String texto) {
+        Color color = switch (texto) {
+            case "Suspender", "Rechazar" -> PELIGRO;
+            case "Aprobar", "✓" -> EXITO;
+            default -> CELESTE;
+        };
+        JButton b = buildBtn(texto, color);
+        b.setMargin(new Insets(2, 6, 2, 6));
+        return b;
+    }
+
+    private void instalarColumnaAccion(JTable table, int colIndex,
+                                        java.util.function.BiConsumer<Integer, String> onClick) {
+        TableColumn col = table.getColumnModel().getColumn(colIndex);
+        col.setCellRenderer((t, value, isSelected, hasFocus, row, column) ->
+                crearBotonAccion(String.valueOf(value)));
+        col.setCellEditor(new BotonCellEditor(onClick));
+    }
+
+    private class BotonCellEditor extends AbstractCellEditor implements TableCellEditor {
+        private JButton boton;
+        private final java.util.function.BiConsumer<Integer, String> onClick;
+
+        BotonCellEditor(java.util.function.BiConsumer<Integer, String> onClick) {
+            this.onClick = onClick;
+        }
+
+        @Override public Object getCellEditorValue() { return boton.getText(); }
+
+        @Override public Component getTableCellEditorComponent(JTable t, Object value,
+                boolean isSelected, int row, int col) {
+            String texto = String.valueOf(value);
+            boton = crearBotonAccion(texto);
+            boton.addActionListener(e -> {
+                fireEditingStopped();
+                onClick.accept(row, texto);
+            });
+            return boton;
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    //  MAIN — solo para pruebas aisladas de esta pantalla.
+    //  En la app real, WorkBridgeApp crea este panel y lo
+    //  muestra dentro de su CardLayout mediante mostrarPantalla().
     // ═══════════════════════════════════════════
     public static void main(String[] args) {
-        // Look & Feel del sistema para mejor integración
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception ignored) {}
- 
+
         SwingUtilities.invokeLater(() -> {
-            DashboardModerador frame = new DashboardModerador();
+            JFrame frame = new JFrame("WorkBridge — Dashboard Moderador (prueba)");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(1280, 800);
+            frame.setMinimumSize(new Dimension(1100, 700));
+            frame.setLocationRelativeTo(null);
+            frame.add(new DashboardModerador(null));
             frame.setVisible(true);
         });
     }
 }
-    
-    
 

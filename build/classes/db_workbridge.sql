@@ -10,7 +10,7 @@ USE workbridge_db;
 -- ============================================================
 -- TABLA: usuarios
 -- Tabla central del sistema. Almacena todos los usuarios
--- sin importar su rol (trabajador, reclutador o admin).
+-- sin importar su rol (trabajador, reclutador, admin o moderador).
 -- ============================================================
 CREATE TABLE usuarios (
     id CHAR(36) PRIMARY KEY,                        -- UUID único por usuario
@@ -22,7 +22,7 @@ CREATE TABLE usuarios (
     departamento VARCHAR(80),                       -- Ubicación: departamento
     municipio VARCHAR(80),                          -- Ubicación: municipio
     foto_url VARCHAR(500),                          -- URL de la foto de perfil
-    rol ENUM('trabajador', 'reclutador', 'admin')   -- Define qué puede hacer el usuario
+    rol ENUM('trabajador', 'reclutador', 'admin', 'moderador')   -- Define qué puede hacer el usuario
         NOT NULL DEFAULT 'trabajador',              -- Por defecto es trabajador
     creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,           -- Fecha de registro automática
     actualizado_en DATETIME DEFAULT CURRENT_TIMESTAMP       -- Se actualiza sola al editar
@@ -266,14 +266,3 @@ CREATE TABLE publicaciones (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
--- =====================================================
--- Nuevas columnas para guardar datos de empresas
--- =====================================================
-ALTER TABLE empresas
-    ADD COLUMN correo_contacto VARCHAR(150),
-    ADD COLUMN telefono        VARCHAR(20),
-    ADD COLUMN direccion       VARCHAR(255),
-    ADD COLUMN linkedin_url    VARCHAR(255),
-    ADD COLUMN facebook_url    VARCHAR(255),
-    ADD COLUMN instagram_url   VARCHAR(255),
-    ADD COLUMN visitas_perfil  INT NOT NULL DEFAULT 0;
