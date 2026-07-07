@@ -38,41 +38,52 @@ public class SidebarAdmin extends JPanel {
         add(crearLogoPanel());
         add(Box.createVerticalStrut(4));
 
-        add(crearNavGroup("PRINCIPAL", new String[][]{
-                {"⊞", "Dashboard", "dashboardAdmin", null},
-                {"⚠", "Reportes", "reportes", "12"},
-        }));
+        String rol = (app != null) ? app.getRolSesion() : null;
 
-        add(crearNavGroup("MODERACIÓN", new String[][]{
-                {"◎", "Usuarios", "gestionUsuarios", "3"},
-                {"▣", "Empresas", "empresas", null},
-                {"⊟", "Vacantes", "vacantes", null},
-                {"◱", "Comunicaciones", "comunicaciones", "5"},
-        }));
+        if ("admin".equals(rol)) {
+            // El rol admin solo debe ver accesos a estas 3 pantallas.
+            add(crearNavGroup("PRINCIPAL", new String[][]{
+                    {"⊠", "Dashboard Moderador", "dashboardModerador", null},
+                    {"◎", "Usuarios", "gestionUsuarios", null},
+                    {"▣", "Verificación Empresas", "empresas", null},
+            }));
+        } else {
+            add(crearNavGroup("PRINCIPAL", new String[][]{
+                    {"⊞", "Dashboard", "dashboardAdmin", null},
+                    {"⚠", "Reportes", "reportes", "12"},
+            }));
 
-        add(crearNavGroup("SISTEMA", new String[][]{
-                {"◈", "Estadísticas", "estadisticas", null},
-                {"⚙", "Configuración", "configuracion", null},
-        }));
+            add(crearNavGroup("MODERACIÓN", new String[][]{
+                    {"◎", "Usuarios", "gestionUsuarios", "3"},
+                    {"▣", "Empresas", "empresas", null},
+                    {"⊟", "Vacantes", "vacantes", null},
+                    {"◱", "Comunicaciones", "comunicaciones", "5"},
+            }));
 
-        add(crearNavGroup("CONTENIDO", new String[][]{
-                {"▤", "Publicaciones", "publicaciones", null},
-                {"⎙", "Documentos", "documentos", null},
-                {"✎", "Habilidades", "habilidades", null},
-                {"◍", "Notificaciones", "notificaciones", null},
-        }));
+            add(crearNavGroup("SISTEMA", new String[][]{
+                    {"◈", "Estadísticas", "estadisticas", null},
+                    {"⚙", "Configuración", "configuracion", null},
+            }));
 
-        add(crearNavGroup("PERFILES", new String[][]{
-                {"☺", "Perfil Usuario", "perfilUsuario", null},
-                {"◔", "Perfil Trabajador", "perfilTrabajador", null},
-                {"⌂", "Gestión Empresa", "gestionEmpresa", null},
-        }));
+            add(crearNavGroup("CONTENIDO", new String[][]{
+                    {"▤", "Publicaciones", "publicaciones", null},
+                    {"⎙", "Documentos", "documentos", null},
+                    {"✎", "Habilidades", "habilidades", null},
+                    {"◍", "Notificaciones", "notificaciones", null},
+            }));
 
-        add(crearNavGroup("PANELES", new String[][]{
-                {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
-                {"⊠", "Dashboard Moderador", "dashboardModerador", null},
-                {"↺", "Registro", "registro", null},
-        }));
+            add(crearNavGroup("PERFILES", new String[][]{
+                    {"☺", "Perfil Usuario", "perfilUsuario", null},
+                    {"◔", "Perfil Trabajador", "perfilTrabajador", null},
+                    {"⌂", "Gestión Empresa", "gestionEmpresa", null},
+            }));
+
+            add(crearNavGroup("PANELES", new String[][]{
+                    {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
+                    {"⊠", "Dashboard Moderador", "dashboardModerador", null},
+                    {"↺", "Registro", "registro", null},
+            }));
+        }
 
         add(Box.createVerticalGlue());
         add(crearFooter());
