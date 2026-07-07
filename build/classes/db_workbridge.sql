@@ -266,3 +266,14 @@ CREATE TABLE publicaciones (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
+-- =====================================================
+-- Nuevas columnas para guardar datos de empresas
+-- =====================================================
+ALTER TABLE empresas
+    ADD COLUMN correo_contacto VARCHAR(150),
+    ADD COLUMN telefono        VARCHAR(20),
+    ADD COLUMN direccion       VARCHAR(255),
+    ADD COLUMN linkedin_url    VARCHAR(255),
+    ADD COLUMN facebook_url    VARCHAR(255),
+    ADD COLUMN instagram_url   VARCHAR(255),
+    ADD COLUMN visitas_perfil  INT NOT NULL DEFAULT 0;
