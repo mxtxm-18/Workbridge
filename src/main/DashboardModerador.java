@@ -71,7 +71,10 @@ public class DashboardModerador extends JPanel {
 
         // Layout principal: sidebar + contenido
         setLayout(new BorderLayout());
-        add(buildSidebar(), BorderLayout.WEST);
+        // Se usa el mismo componente SidebarAdmin que el resto de las pantallas
+        // (GestionUsuarios, VerificacionEmpresas, etc.) para que el sidebar del
+        // admin sea siempre el mismo y no cambie al navegar entre secciones.
+        add(new SidebarAdmin(app, "dashboardModerador"), BorderLayout.WEST);
         add(buildMain(),    BorderLayout.CENTER);
     }
 
