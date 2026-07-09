@@ -4,6 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class SidebarAdmin extends JPanel {
 
@@ -24,6 +28,7 @@ public class SidebarAdmin extends JPanel {
     private final WorkBridgeApp app;
     private final String activo;
     private String nombreUsuario = "Admin";
+    private String rolEtiqueta = "Administrador";
 
     public SidebarAdmin(WorkBridgeApp app, String activo) {
         this.app = app;
@@ -39,6 +44,7 @@ public class SidebarAdmin extends JPanel {
         add(Box.createVerticalStrut(4));
 
         String rol = (app != null) ? app.getRolSesion() : null;
+        cargarDatosUsuario(app, rol);
 
         if ("admin".equals(rol)) {
             // El rol admin solo debe ver accesos a estas 3 pantallas.
@@ -48,17 +54,29 @@ public class SidebarAdmin extends JPanel {
                     {"▣", "Verificación Empresas", "empresas", null},
             }));
         } else {
+            // Solo el rol moderador conserva los accesos a Dashboard Moderador,
+            // Usuarios y Verificación Empresas. Trabajador y empresa (reclutador)
+            // no deben ver estos accesos en su sidebar.
+            boolean esModerador = "moderador".equals(rol);
+
             add(crearNavGroup("PRINCIPAL", new String[][]{
                     {"⊞", "Dashboard", "dashboardAdmin", null},
                     {"⚠", "Reportes", "reportes", "12"},
             }));
 
-            add(crearNavGroup("MODERACIÓN", new String[][]{
-                    {"◎", "Usuarios", "gestionUsuarios", "3"},
-                    {"▣", "Empresas", "empresas", null},
-                    {"⊟", "Vacantes", "vacantes", null},
-                    {"◱", "Comunicaciones", "comunicaciones", "5"},
-            }));
+            if (esModerador) {
+                add(crearNavGroup("MODERACIÓN", new String[][]{
+                        {"◎", "Usuarios", "gestionUsuarios", "3"},
+                        {"▣", "Empresas", "empresas", null},
+                        {"⊟", "Vacantes", "vacantes", null},
+                        {"◱", "Comunicaciones", "comunicaciones", "5"},
+                }));
+            } else {
+                add(crearNavGroup("MODERACIÓN", new String[][]{
+                        {"⊟", "Vacantes", "vacantes", null},
+                        {"◱", "Comunicaciones", "comunicaciones", "5"},
+                }));
+            }
 
             add(crearNavGroup("SISTEMA", new String[][]{
                     {"◈", "Estadísticas", "estadisticas", null},
@@ -78,11 +96,18 @@ public class SidebarAdmin extends JPanel {
                     {"⌂", "Gestión Empresa", "gestionEmpresa", null},
             }));
 
-            add(crearNavGroup("PANELES", new String[][]{
-                    {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
-                    {"⊠", "Dashboard Moderador", "dashboardModerador", null},
-                    {"↺", "Registro", "registro", null},
-            }));
+            if (esModerador) {
+                add(crearNavGroup("PANELES", new String[][]{
+                        {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
+                        {"⊠", "Dashboard Moderador", "dashboardModerador", null},
+                        {"↺", "Registro", "registro", null},
+                }));
+            } else {
+                add(crearNavGroup("PANELES", new String[][]{
+                        {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
+                        {"↺", "Registro", "registro", null},
+                }));
+            }
         }
 
         add(Box.createVerticalGlue());
@@ -92,6 +117,56 @@ public class SidebarAdmin extends JPanel {
     public void setNombreUsuario(String nombre) {
         this.nombreUsuario = nombre;
         repaint();
+    }
+
+    // Convierte el valor de la columna "rol" en un texto legible para el footer.
+    private String etiquetaParaRol(String rol) {
+        if (rol == null) return "Usuario";
+        return switch (rol) {
+            case "admin" -> "Administrador";
+            case "moderador" -> "Moderador";
+            case "reclutador" -> "Empresa";
+            case "trabajador" -> "Trabajador";
+            default -> rol.substring(0, 1).toUpperCase() + rol.substring(1);
+        };
+    }
+
+    // Consulta en la base de datos el nombre real del usuario en sesión
+    // (tabla "usuarios") y actualiza el nombre y la etiqueta de rol del footer.
+    private void cargarDatosUsuario(WorkBridgeApp app, String rolSesion) {
+        rolEtiqueta = etiquetaParaRol(rolSesion);
+
+        String usuarioId = (app != null) ? app.getUsuarioIdSesion() : null;
+        if (usuarioId == null) {
+            return; // No hay sesión activa; se conservan los valores por defecto.
+        }
+
+        String sql = "SELECT nombre, apellido, rol FROM usuarios WHERE id = ?";
+        try (Connection con = ConexionDB.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String nombre = rs.getString("nombre");
+                    String apellido = rs.getString("apellido");
+                    String nombreCompleto = (nombre != null ? nombre : "").trim();
+                    if (apellido != null && !apellido.isBlank()) {
+                        nombreCompleto = (nombreCompleto + " " + apellido).trim();
+                    }
+                    if (!nombreCompleto.isEmpty()) {
+                        nombreUsuario = nombreCompleto;
+                    }
+                    String rolBd = rs.getString("rol");
+                    if (rolBd != null && !rolBd.isBlank()) {
+                        rolEtiqueta = etiquetaParaRol(rolBd);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            // Si falla la consulta (BD no disponible, etc.) se conservan los
+            // valores por defecto para no romper la interfaz.
+            System.err.println("No se pudo cargar el usuario del sidebar: " + ex.getMessage());
+        }
     }
 
     @Override
@@ -280,7 +355,7 @@ public class SidebarAdmin extends JPanel {
         lblNombre.setFont(new Font("SansSerif", Font.BOLD, 11));
         lblNombre.setForeground(WHITE);
 
-        JLabel lblRol = new JLabel("Administrador");
+        JLabel lblRol = new JLabel(rolEtiqueta);
         lblRol.setFont(FONT_SMALL);
         lblRol.setForeground(new Color(212, 205, 197, 150));
 
