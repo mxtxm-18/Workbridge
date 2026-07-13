@@ -45,7 +45,7 @@ public class WorkBridgeApp extends JFrame {
         screens.put("gestionUsuarios", new GestionUsuarios(this));
         screens.put("empresas", new VerificacionEmpresas(this));
         screens.put("habilidades", new GestionHabilidades(this));
-        screens.put("dashboardEmpresa", crearDashboardEmpresa());
+        screens.put("dashboardEmpresa", new DashboardEmpresa(this));
         screens.put("dashboardModerador", new DashboardModerador(this));
         screens.put("gestionEmpresa", new Gestion_Empresa(this));
 
@@ -82,6 +82,7 @@ public class WorkBridgeApp extends JFrame {
         reemplazarPantalla("notificaciones", new Notificaciones(this));
         reemplazarPantalla("comunicaciones", new Comunicaciones(this));
         reemplazarPantalla("dashboardAdmin", new DashboardAdmin(this));
+        reemplazarPantalla("dashboardEmpresa", new DashboardEmpresa(this));
         reemplazarPantalla("gestionUsuarios", new GestionUsuarios(this));
         reemplazarPantalla("empresas", new VerificacionEmpresas(this));
         reemplazarPantalla("habilidades", new GestionHabilidades(this));
@@ -102,31 +103,6 @@ public class WorkBridgeApp extends JFrame {
 
     public String getRolSesion() {
         return rolSesion;
-    }
-
-    private JPanel crearDashboardEmpresa() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-
-        JLabel lblLogo = Recursos.crearLabelLogo(180, 70, "WorkBridge");
-        lblLogo.setHorizontalAlignment(SwingConstants.CENTER);
-        lblLogo.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
-        panel.add(lblLogo, BorderLayout.NORTH);
-
-        JLabel label = new JLabel("Dashboard Empresarial");
-        label.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        label.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(label, BorderLayout.CENTER);
-
-        JButton btnSalir = new JButton("Cerrar sesión");
-        btnSalir.addActionListener(e -> cerrarSesion());
-        btnSalir.setPreferredSize(new Dimension(160, 36));
-
-        JPanel sur = new JPanel();
-        sur.add(btnSalir);
-        panel.add(sur, BorderLayout.SOUTH);
-
-        return panel;
     }
 
     public void cerrarSesion() {

@@ -1,3 +1,5 @@
+package main;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
@@ -26,7 +28,11 @@ import java.util.Locale;
  * Tecnologías: Java 11, Swing y AWT puro (sin librerías externas).
  * ============================================================================
  */
-public class DashboardEmpresa extends JFrame {
+public class DashboardEmpresa extends JPanel {
+
+    // Referencia a la aplicación principal, para poder navegar entre pantallas
+    // y cerrar sesión correctamente (mismo patrón que el resto de dashboards)
+    private final WorkBridgeApp app;
 
     //========================================================
     // PALETA DE COLORES OFICIAL (extraída de PALETA_DE_COLORES.pdf)
@@ -65,41 +71,12 @@ public class DashboardEmpresa extends JFrame {
     //========================================================
     // DECLARACIÓN DE COMPONENTES - ESTRUCTURA GENERAL
     //========================================================
-    // Panel lateral izquierdo que contiene el logotipo y el menú de navegación
-    private JPanel panelMenuLateral;
     // Panel superior que contiene el saludo, la fecha y los íconos de usuario
     private JPanel panelEncabezado;
     // Panel central donde se despliega todo el contenido del dashboard (con scroll)
     private JPanel panelContenidoDashboard;
     // Contenedor con scroll para que el contenido se pueda desplazar si la ventana es pequeña
     private JScrollPane scrollContenido;
-
-    //========================================================
-    // DECLARACIÓN DE COMPONENTES - MENÚ LATERAL
-    //========================================================
-    // Etiqueta que muestra el nombre "WorkBridge" estilizado como logotipo
-    private JLabel lblNombreLogo;
-    // Etiqueta que muestra el eslogan institucional debajo del logotipo
-    private JLabel lblEslogan;
-    // Botones de navegación del menú lateral
-    private JButton btnInicio;
-    private JButton btnMiPerfil;
-    private JButton btnBuscarVacantes;
-    private JButton btnMisPostulaciones;
-    private JButton btnEntrevistas;
-    private JButton btnNotificacionesMenu;
-    private JButton btnDocumentos;
-    private JButton btnConfiguracion;
-    // Botón encargado de cerrar la sesión activa del usuario empresarial
-    private JButton btnCerrarSesion;
-    // Panel inferior del menú lateral que muestra la empresa logueada
-    private JPanel panelUsuarioFooter;
-    // Etiqueta que muestra el nombre de la empresa logueada en el pie del menú
-    private JLabel lblNombreEmpresaFooter;
-    // Arreglo que agrupa todos los botones del menú para manejar la selección visual
-    private JButton[] botonesMenu;
-    // Índice del botón actualmente seleccionado dentro del menú lateral
-    private int indiceBotonSeleccionado = 7; // Configuración aparece seleccionada en la referencia
 
     //========================================================
     // DECLARACIÓN DE COMPONENTES - ENCABEZADO SUPERIOR
@@ -161,228 +138,21 @@ public class DashboardEmpresa extends JFrame {
     //========================================================
     // CONSTRUCTOR
     //========================================================
-    public DashboardEmpresa() {
+    public DashboardEmpresa(WorkBridgeApp app) {
+        this.app = app;
         configurarVentana();
-        construirMenuLateral();
         construirEncabezado();
         construirContenidoPrincipal();
         ensamblarVentana();
-        seleccionarBotonMenu(indiceBotonSeleccionado);
     }
 
     //========================================================
     // CONFIGURACIÓN GENERAL DE LA VENTANA
     //========================================================
     private void configurarVentana() {
-        setTitle("WorkBridge - Dashboard Empresarial");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1100, 650));
-        setSize(1200, 720);
-        setLocationRelativeTo(null);
         // Layout principal de tipo BorderLayout para distribuir sidebar, header y contenido
         setLayout(new BorderLayout());
-        getContentPane().setBackground(COLOR_BLANCO);
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {
-            // Si falla, se conserva el Look and Feel por defecto sin interrumpir la app
-        }
-    }
-
-    //========================================================
-    // CREACIÓN DEL MENÚ LATERAL (SIDEBAR)
-    //========================================================
-    private void construirMenuLateral() {
-        panelMenuLateral = new JPanel();
-        panelMenuLateral.setLayout(new BoxLayout(panelMenuLateral, BoxLayout.Y_AXIS));
-        panelMenuLateral.setBackground(COLOR_AZUL_MARINO);
-        panelMenuLateral.setPreferredSize(new Dimension(235, 0));
-        panelMenuLateral.setBorder(new EmptyBorder(15, 0, 15, 0));
-
-        // ---- Bloque del logotipo ----
-        JPanel panelLogo = crearPanelLogotipo();
-        panelLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panelMenuLateral.add(panelLogo);
-        panelMenuLateral.add(Box.createRigidArea(new Dimension(0, 20)));
-
-        // ---- Botones de navegación ----
-        btnInicio              = crearBotonMenu("Inicio", '\u2302');
-        btnMiPerfil            = crearBotonMenu("Mi perfil", '\u263A');
-        btnBuscarVacantes      = crearBotonMenu("Buscar Vacantes", '\u2315');
-        btnMisPostulaciones    = crearBotonMenu("Mis postulaciones", '\u2709');
-        btnEntrevistas         = crearBotonMenu("Entrevistas", '\u2696');
-        btnNotificacionesMenu  = crearBotonMenu("Notificaciones", '\u266B');
-        btnDocumentos          = crearBotonMenu("Documentos", '\u2637');
-        btnConfiguracion       = crearBotonMenu("Configuracion", '\u2699');
-
-        botonesMenu = new JButton[]{
-            btnInicio, btnMiPerfil, btnBuscarVacantes, btnMisPostulaciones,
-            btnEntrevistas, btnNotificacionesMenu, btnDocumentos, btnConfiguracion
-        };
-
-        for (int i = 0; i < botonesMenu.length; i++) {
-            final int indice = i;
-            botonesMenu[i].addActionListener(e -> seleccionarBotonMenu(indice));
-            botonesMenu[i].setAlignmentX(Component.LEFT_ALIGNMENT);
-            panelMenuLateral.add(botonesMenu[i]);
-        }
-
-        panelMenuLateral.add(Box.createVerticalGlue());
-
-        // ---- Botón de cerrar sesión ----
-        btnCerrarSesion = crearBotonMenu("Cerrar sesion", '\u23FB');
-        btnCerrarSesion.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btnCerrarSesion.addActionListener(e -> manejarCerrarSesion());
-        panelMenuLateral.add(btnCerrarSesion);
-        panelMenuLateral.add(Box.createRigidArea(new Dimension(0, 12)));
-
-        // ---- Panel inferior con la empresa logueada ----
-        panelUsuarioFooter = construirPanelUsuarioFooter();
-        panelUsuarioFooter.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panelMenuLateral.add(panelUsuarioFooter);
-    }
-
-    // Construye el bloque visual del logotipo "WorkBridge" con su eslogan
-    private JPanel crearPanelLogotipo() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBackground(COLOR_AZUL_MARINO);
-        panel.setBorder(new EmptyBorder(10, 20, 10, 10));
-        panel.setMaximumSize(new Dimension(235, 90));
-
-        // Ícono del maletín + puente dibujado vectorialmente (sin imágenes externas)
-        JPanel iconoMaletin = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(COLOR_MORADO);
-                g2.fillRoundRect(4, 12, 30, 20, 6, 6);
-                g2.setColor(COLOR_AZUL_ACERO);
-                g2.fillRoundRect(12, 6, 14, 10, 4, 4);
-                g2.setColor(COLOR_AZUL_MARINO);
-                g2.fillRect(4, 20, 30, 3);
-                g2.dispose();
-            }
-        };
-        iconoMaletin.setOpaque(false);
-        iconoMaletin.setMaximumSize(new Dimension(38, 32));
-        iconoMaletin.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        lblNombreLogo = new JLabel("Work Bridge");
-        lblNombreLogo.setFont(FUENTE_LOGO);
-        lblNombreLogo.setForeground(COLOR_BLANCO);
-        lblNombreLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        lblEslogan = new JLabel("<html>CONECTAMOS TALENTO,<br>GENERAMOS OPORTUNIDADES</html>");
-        lblEslogan.setFont(FUENTE_LOGO_SUB);
-        lblEslogan.setForeground(COLOR_BEIGE);
-        lblEslogan.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JPanel filaSuperior = new JPanel();
-        filaSuperior.setLayout(new BoxLayout(filaSuperior, BoxLayout.X_AXIS));
-        filaSuperior.setOpaque(false);
-        filaSuperior.add(iconoMaletin);
-        filaSuperior.add(Box.createRigidArea(new Dimension(6, 0)));
-        filaSuperior.add(lblNombreLogo);
-        filaSuperior.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        panel.add(filaSuperior);
-        panel.add(Box.createRigidArea(new Dimension(0, 4)));
-        panel.add(lblEslogan);
-        return panel;
-    }
-
-    // Crea un botón de menú lateral estilizado, con ícono textual y efecto hover
-    private JButton crearBotonMenu(String texto, char icono) {
-        JButton boton = new JButton("  " + icono + "    " + texto);
-        boton.setFont(FUENTE_MENU);
-        boton.setForeground(COLOR_TEXTO_CLARO);
-        boton.setBackground(COLOR_AZUL_MARINO);
-        boton.setHorizontalAlignment(SwingConstants.LEFT);
-        boton.setFocusPainted(false);
-        boton.setBorderPainted(false);
-        boton.setContentAreaFilled(true);
-        boton.setOpaque(true);
-        boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        boton.setMaximumSize(new Dimension(235, 38));
-        boton.setPreferredSize(new Dimension(235, 38));
-        boton.setBorder(new EmptyBorder(8, 18, 8, 8));
-
-        // Efecto hover: cambia de color cuando el cursor pasa sobre el botón
-        boton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (!boton.equals(botonesMenuActualSeleccionado())) {
-                    boton.setBackground(COLOR_AZUL_ACERO);
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (!boton.equals(botonesMenuActualSeleccionado())) {
-                    boton.setBackground(COLOR_AZUL_MARINO);
-                }
-            }
-        });
-        return boton;
-    }
-
-    // Devuelve el botón actualmente marcado como seleccionado (o null si aún no existe el arreglo)
-    private JButton botonesMenuActualSeleccionado() {
-        if (botonesMenu == null) return null;
-        if (indiceBotonSeleccionado < 0 || indiceBotonSeleccionado >= botonesMenu.length) return null;
-        return botonesMenu[indiceBotonSeleccionado];
-    }
-
-    // Marca visualmente el botón seleccionado del menú (color morado/lavanda) y actualiza el título
-    private void seleccionarBotonMenu(int indice) {
-        indiceBotonSeleccionado = indice;
-        for (int i = 0; i < botonesMenu.length; i++) {
-            botonesMenu[i].setBackground(i == indice ? COLOR_MORADO : COLOR_AZUL_MARINO);
-        }
-        if (lblTituloSeccion != null) {
-            String[] nombresSecciones = {
-                "Inicio", "Mi Perfil", "Buscar Vacantes", "Mis Postulaciones",
-                "Entrevistas", "Notificaciones", "Documentos", "Dashboard Empresarial"
-            };
-            lblTituloSeccion.setText(nombresSecciones[indice]);
-        }
-    }
-
-    // Construye el panel inferior del menú con el nombre de la empresa logueada
-    private JPanel construirPanelUsuarioFooter() {
-        JPanel panel = new JPanel(new BorderLayout(10, 0));
-        panel.setBackground(new Color(0x1C, 0x2E, 0x54));
-        panel.setMaximumSize(new Dimension(235, 55));
-        panel.setBorder(new EmptyBorder(8, 14, 8, 14));
-
-        // Ícono circular simulando avatar de la empresa
-        JPanel avatar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(COLOR_BEIGE);
-                g2.fillOval(0, 0, 32, 32);
-                g2.setColor(COLOR_AZUL_MARINO);
-                g2.fillOval(10, 6, 12, 12);
-                g2.fillOval(6, 20, 20, 14);
-                g2.dispose();
-            }
-        };
-        avatar.setOpaque(false);
-        avatar.setPreferredSize(new Dimension(32, 32));
-
-        lblNombreEmpresaFooter = new JLabel(NOMBRE_EMPRESA_USUARIO);
-        lblNombreEmpresaFooter.setFont(FUENTE_MENU);
-        lblNombreEmpresaFooter.setForeground(COLOR_BLANCO);
-
-        panel.add(avatar, BorderLayout.WEST);
-        panel.add(lblNombreEmpresaFooter, BorderLayout.CENTER);
-        return panel;
+        setBackground(COLOR_BLANCO);
     }
 
     //========================================================
@@ -775,7 +545,7 @@ public class DashboardEmpresa extends JFrame {
     // ENSAMBLAJE FINAL DE LA VENTANA
     //========================================================
     private void ensamblarVentana() {
-        add(panelMenuLateral, BorderLayout.WEST);
+        add(new SidebarAdmin(app, "dashboardEmpresa"), BorderLayout.WEST);
 
         JPanel panelDerechoCompleto = new JPanel(new BorderLayout());
         panelDerechoCompleto.add(panelEncabezado, BorderLayout.NORTH);
@@ -801,7 +571,9 @@ public class DashboardEmpresa extends JFrame {
             if (opcion == JOptionPane.YES_OPTION) {
                 JOptionPane.showMessageDialog(this, "Sesión cerrada correctamente.",
                     "WorkBridge", JOptionPane.INFORMATION_MESSAGE);
-                dispose();
+                if (app != null) {
+                    app.cerrarSesion();
+                }
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Ocurrió un error al cerrar la sesión: " + ex.getMessage(),
@@ -816,13 +588,4 @@ public class DashboardEmpresa extends JFrame {
         JOptionPane.showMessageDialog(this, mensaje, titulo, JOptionPane.INFORMATION_MESSAGE);
     }
 
-    //========================================================
-    // MÉTODO PRINCIPAL
-    //========================================================
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            DashboardEmpresa ventana = new DashboardEmpresa();
-            ventana.setVisible(true);
-        });
-    }
 }
