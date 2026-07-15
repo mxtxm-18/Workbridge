@@ -277,3 +277,10 @@ ALTER TABLE empresas
     ADD COLUMN facebook_url    VARCHAR(255),
     ADD COLUMN instagram_url   VARCHAR(255),
     ADD COLUMN visitas_perfil  INT NOT NULL DEFAULT 0;
+
+-- =====================================================
+-- Credenciales de admin
+-- =====================================================
+
+    INSERT INTO usuarios (id, nombre, apellido, email, password_hash, rol)
+VALUES (UUID(), 'Admin', 'Sistema', 'admin@workbridge.com', 'admin123', 'admin');
