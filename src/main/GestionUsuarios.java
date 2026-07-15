@@ -33,8 +33,6 @@ public class GestionUsuarios extends JPanel {
         setPreferredSize(new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT));
 
         // ── Diseño común: Sidebar y Topbar iguales al resto de la interfaz ──
-        // (mismo componente SidebarAdmin que usa DashboardAdmin, así los botones
-        // de la izquierda quedan unificados en toda la aplicación)
         add(new SidebarAdmin(app, "gestionUsuarios"), BorderLayout.WEST);
 
         JPanel derecho = new JPanel(new BorderLayout());
@@ -48,9 +46,6 @@ public class GestionUsuarios extends JPanel {
     }
 
     // ─── Control de acceso por rol ───────────────────────────────────────────
-    // NOTA: reemplaza esta línea por la forma real en que WorkBridgeApp guarda
-    // el rol del usuario logueado (por ejemplo: app.getUsuarioActual().getRol()).
-    // Se deja así para no romper la compilación si ese método aún no existe.
     private boolean tieneAccesoAdmin() {
         String rolActual = "admin"; // TODO: reemplazar por el rol real de la sesión
         if (!"admin".equalsIgnoreCase(rolActual)) {
@@ -187,6 +182,14 @@ public class GestionUsuarios extends JPanel {
         tabla.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         tabla.getTableHeader().setBackground(new Color(220, 220, 220));
         tabla.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+
+        // --- Bloquear modificación de tamaño de columnas y filas ---
+        tabla.getTableHeader().setResizingAllowed(false);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        tabla.setFillsViewportHeight(true);
+        // ---
+
         tabla.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v,
@@ -198,7 +201,12 @@ public class GestionUsuarios extends JPanel {
         });
 
         JScrollPane scroll = new JScrollPane(tabla);
+        // Fijar tamaño explícito del scroll y evitar cambios por layout
         scroll.setBounds(0, 44, tablaW, tablaH - 44);
+        scroll.setPreferredSize(new Dimension(tablaW, tablaH - 44));
+        scroll.setMinimumSize(new Dimension(tablaW, tablaH - 44));
+        scroll.setMaximumSize(new Dimension(tablaW, tablaH - 44));
+
         panelTabla.add(scroll);
 
         principal.add(panelTabla);

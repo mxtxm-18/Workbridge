@@ -41,8 +41,19 @@ public class VerificacionEmpresas extends JPanel {
         tabla.getTableHeader().setBackground(COLOR_MENU);
         tabla.getTableHeader().setForeground(Color.WHITE);
 
+        // --- Bloquear modificación de tamaño de columnas y filas ---
+        tabla.getTableHeader().setResizingAllowed(false);
+        tabla.getTableHeader().setReorderingAllowed(false);
+        tabla.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        tabla.setFillsViewportHeight(true);
+        // ---
+
         JScrollPane scroll = new JScrollPane(tabla);
         scroll.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        // Fijar tamaño del scroll y evitar cambios por layout
+        // En este caso, el tamaño se adapta al contenedor, pero no se puede arrastrar
+        // porque la tabla no permite resize y el layout es BorderLayout.
 
         JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
         panelBotones.setBackground(BG);
