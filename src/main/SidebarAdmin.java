@@ -53,30 +53,19 @@ public class SidebarAdmin extends JPanel {
                     {"◎", "Usuarios", "gestionUsuarios", null},
                     {"▣", "Verificación Empresas", "empresas", null},
             }));
-        } else {
-            // Solo el rol moderador conserva los accesos a Dashboard Moderador,
-            // Usuarios y Verificación Empresas. Trabajador y empresa (reclutador)
-            // no deben ver estos accesos en su sidebar.
-            boolean esModerador = "moderador".equals(rol);
-
+        } else if ("moderador".equals(rol)) {
+            // El moderador conserva el set completo de accesos administrativos.
             add(crearNavGroup("PRINCIPAL", new String[][]{
                     {"⊞", "Dashboard", "dashboardAdmin", null},
                     {"⚠", "Reportes", "reportes", "12"},
             }));
 
-            if (esModerador) {
-                add(crearNavGroup("MODERACIÓN", new String[][]{
-                        {"◎", "Usuarios", "gestionUsuarios", "3"},
-                        {"▣", "Empresas", "empresas", null},
-                        {"⊟", "Vacantes", "vacantes", null},
-                        {"◱", "Comunicaciones", "comunicaciones", "5"},
-                }));
-            } else {
-                add(crearNavGroup("MODERACIÓN", new String[][]{
-                        {"⊟", "Vacantes", "vacantes", null},
-                        {"◱", "Comunicaciones", "comunicaciones", "5"},
-                }));
-            }
+            add(crearNavGroup("MODERACIÓN", new String[][]{
+                    {"◎", "Usuarios", "gestionUsuarios", "3"},
+                    {"▣", "Empresas", "empresas", null},
+                    {"⊟", "Vacantes", "vacantes", null},
+                    {"◱", "Comunicaciones", "comunicaciones", "5"},
+            }));
 
             add(crearNavGroup("SISTEMA", new String[][]{
                     {"◈", "Estadísticas", "estadisticas", null},
@@ -96,18 +85,31 @@ public class SidebarAdmin extends JPanel {
                     {"⌂", "Gestión Empresa", "gestionEmpresa", null},
             }));
 
-            if (esModerador) {
-                add(crearNavGroup("PANELES", new String[][]{
-                        {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
-                        {"⊠", "Dashboard Moderador", "dashboardModerador", null},
-                        {"↺", "Registro", "registro", null},
-                }));
-            } else {
-                add(crearNavGroup("PANELES", new String[][]{
-                        {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
-                        {"↺", "Registro", "registro", null},
-                }));
-            }
+            add(crearNavGroup("PANELES", new String[][]{
+                    {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
+                    {"⊠", "Dashboard Moderador", "dashboardModerador", null},
+                    {"↺", "Registro", "registro", null},
+            }));
+        } else if ("reclutador".equals(rol)) {
+            // Rol empresa: únicamente los accesos que le corresponden.
+            add(crearNavGroup("PRINCIPAL", new String[][]{
+                    {"⊞", "Dashboard Administrativo", "dashboardAdmin", null},
+                    {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
+            }));
+
+            add(crearNavGroup("GESTIÓN", new String[][]{
+                    {"⌂", "Gestión Empresa", "gestionEmpresa", null},
+                    {"▤", "Publicaciones", "publicaciones", null},
+            }));
+        } else {
+            // Rol usuario (trabajador): únicamente los accesos que le corresponden.
+            add(crearNavGroup("PRINCIPAL", new String[][]{
+                    {"▤", "Publicaciones", "publicaciones", null},
+                    {"⎙", "Documentos", "documentos", null},
+                    {"✎", "Habilidades", "habilidades", null},
+                    {"◍", "Notificaciones", "notificaciones", null},
+                    {"☺", "Perfil Usuario", "perfilUsuario", null},
+            }));
         }
 
         add(Box.createVerticalGlue());
@@ -251,9 +253,7 @@ public class SidebarAdmin extends JPanel {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true; repaint(); }
                     @Override public void mouseExited(MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
-                        if ("perfilUsuario".equals(pantalla)) {
-                            new PerfilUsuario().setVisible(true);
-                        } else if (app != null) {
+                        if (app != null) {
                             app.mostrarPantalla(pantalla);
                         }
                     }

@@ -48,6 +48,7 @@ public class WorkBridgeApp extends JFrame {
         screens.put("dashboardEmpresa", new DashboardEmpresa(this));
         screens.put("dashboardModerador", new DashboardModerador(this));
         screens.put("gestionEmpresa", new Gestion_Empresa(this));
+        screens.put("perfilUsuario", new PerfilUsuario());
 
         for (Map.Entry<String, Component> entry : screens.entrySet()) {
             mainPanel.add(entry.getValue(), entry.getKey());
@@ -88,6 +89,7 @@ public class WorkBridgeApp extends JFrame {
         reemplazarPantalla("habilidades", new GestionHabilidades(this));
         reemplazarPantalla("dashboardModerador", new DashboardModerador(this));
         reemplazarPantalla("gestionEmpresa", new Gestion_Empresa(this));
+        reemplazarPantalla("perfilUsuario", new PerfilUsuario());
 
         switch (rol) {
             case "admin" -> mostrarPantalla("dashboardAdmin");

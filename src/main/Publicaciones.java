@@ -29,9 +29,13 @@ public class Publicaciones extends JPanel {
         derecho.setBackground(BG);
         derecho.add(crearTopBar("Publicaciones"), BorderLayout.NORTH);
 
+        // El rol "trabajador" (usuario) solo puede ver publicaciones, no crearlas.
+        boolean puedePublicar = app != null && !"trabajador".equals(app.getRolSesion());
+
         JPanel panelNuevo = new JPanel(null);
         panelNuevo.setBackground(Color.WHITE);
         panelNuevo.setPreferredSize(new Dimension(0, 100));
+        panelNuevo.setVisible(puedePublicar);
 
         JTextArea taContenido = new JTextArea("¿Qué deseas compartir?");
         taContenido.setBounds(20, 10, 700, 50);

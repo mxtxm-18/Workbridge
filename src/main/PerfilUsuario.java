@@ -35,7 +35,7 @@ import javax.imageio.ImageIO;
  * Tecnologías: Java 11, Swing y AWT puro (sin librerías externas).
  * ============================================================================
  */
-public class PerfilUsuario extends JFrame {
+public class PerfilUsuario extends JPanel {
 
     //========================================================
     // PALETA DE COLORES OFICIAL
@@ -218,27 +218,10 @@ public class PerfilUsuario extends JFrame {
     // CONFIGURACIÓN GENERAL DE LA VENTANA
     //========================================================
     private void configurarVentana() {
-        setTitle("WorkBridge - Mi Perfil");
-        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        setMinimumSize(new Dimension(1150, 680));
-        setSize(1220, 760);
-        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
-        getContentPane().setBackground(COLOR_BLANCO);
-
-        // Confirmación antes de cerrar la ventana, para no perder cambios sin guardar
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                manejarCierreVentana();
-            }
-        });
-
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {
-            // Si falla, se conserva el Look and Feel por defecto
-        }
+        setBackground(COLOR_BLANCO);
+        setOpaque(true);
+        setPreferredSize(new Dimension(1150, 680));
     }
 
     //========================================================
@@ -1493,23 +1476,17 @@ public class PerfilUsuario extends JFrame {
         JOptionPane.showMessageDialog(this, mensaje, titulo, JOptionPane.INFORMATION_MESSAGE);
     }
 
-    // Solicita confirmación antes de cerrar la ventana, evitando pérdida accidental de cambios
-    private void manejarCierreVentana() {
-        int opcion = JOptionPane.showConfirmDialog(this,
-            "¿Seguro que deseas salir de tu perfil? Verifica que hayas guardado tus cambios.",
-            "Confirmar salida", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (opcion == JOptionPane.YES_OPTION) {
-            dispose();
-            System.exit(0);
-        }
-    }
-
     //========================================================
-    // MÉTODO PRINCIPAL
+    // MÉTODO PRINCIPAL (solo para pruebas aisladas de esta pantalla)
     //========================================================
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
-            PerfilUsuario ventana = new PerfilUsuario();
+            JFrame ventana = new JFrame("WorkBridge - Mi Perfil");
+            ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            ventana.setContentPane(new PerfilUsuario());
+            ventana.setMinimumSize(new Dimension(1150, 680));
+            ventana.setSize(1220, 760);
+            ventana.setLocationRelativeTo(null);
             ventana.setVisible(true);
         });
     }
