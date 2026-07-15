@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.sql.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class DashboardAdmin extends JPanel {
 
@@ -26,6 +28,10 @@ public class DashboardAdmin extends JPanel {
     private JLabel valorUsuarios;
     private JLabel valorOfertas;
     private JLabel valorComunicaciones;
+
+    // Referencias a las gráficas para poder actualizarlas tras cargar la BD
+    private GraficaBarras grafica1; // Usuarios
+    private GraficaBarras grafica2; // Ofertas de Empleo
 
     public DashboardAdmin(WorkBridgeApp app) {
         this.app = app;
@@ -123,18 +129,16 @@ public class DashboardAdmin extends JPanel {
         int graficaH = 480;
         int graficaW = (CONTENT_WIDTH - 60 - 60 - 30) / 2; // margen izq/der + separación entre las dos
 
-        JPanel grafica1 = new JPanel();
+        grafica1 = new GraficaBarras("Usuarios por Rol");
         grafica1.setBounds(x1, graficaY, graficaW, graficaH);
         grafica1.setBorder(new LineBorder(Color.GRAY));
-        grafica1.setBackground(Color.WHITE);
-        grafica1.add(new JLabel("Usuarios"));
+        grafica1.setColorBarra(new Color(70, 130, 180));
         contenido.add(grafica1);
 
-        JPanel grafica2 = new JPanel();
+        grafica2 = new GraficaBarras("Ofertas de Empleo por Estado");
         grafica2.setBounds(x1 + graficaW + 30, graficaY, graficaW, graficaH);
         grafica2.setBorder(new LineBorder(Color.GRAY));
-        grafica2.setBackground(Color.WHITE);
-        grafica2.add(new JLabel("Ofertas de Empleo"));
+        grafica2.setColorBarra(new Color(0x24, 0x3A, 0x69));
         contenido.add(grafica2);
 
         return contenido;
@@ -177,13 +181,24 @@ public class DashboardAdmin extends JPanel {
 
             int totalUsuarios = obtenerConteo(con, "SELECT COUNT(*) FROM usuarios");
             int ofertasActivas = obtenerConteo(con,
-                    "SELECT COUNT(*) FROM ofertas WHERE estado = 'activa'");
+                    "SELECT COUNT(*) FROM vacantes WHERE estado = 'activa'");
             int comunicacionesEnviadas = obtenerConteo(con,
-                    "SELECT COUNT(*) FROM comunicaciones WHERE estado = 'enviado'");
+                    "SELECT COUNT(*) FROM notificaciones");
 
             valorUsuarios.setText(String.valueOf(totalUsuarios));
             valorOfertas.setText(String.valueOf(ofertasActivas));
             valorComunicaciones.setText(String.valueOf(comunicacionesEnviadas));
+
+            // Gráfica de vacantes agrupadas por estado (activa / pausada / cerrada)
+            Map<String, Integer> datosVacantes = obtenerConteoAgrupado(con,
+                    "SELECT estado, COUNT(*) FROM vacantes GROUP BY estado");
+            grafica2.setDatos(datosVacantes);
+
+            // Gráfica de usuarios agrupados por rol
+            // NOTA: ajusta "rol" al nombre real de la columna en tu tabla "usuarios"
+            Map<String, Integer> datosUsuarios = obtenerConteoAgrupado(con,
+                    "SELECT rol, COUNT(*) FROM usuarios GROUP BY rol");
+            grafica1.setDatos(datosUsuarios);
 
             if (totalUsuarios == 0 && ofertasActivas == 0 && comunicacionesEnviadas == 0) {
                 JOptionPane.showMessageDialog(this, "No se encontraron datos.",
@@ -208,5 +223,19 @@ public class DashboardAdmin extends JPanel {
             }
             return 0;
         }
+    }
+
+    /** Ejecuta un SQL tipo "SELECT columna, COUNT(*) ... GROUP BY columna" y arma un mapa etiqueta→valor. */
+    private Map<String, Integer> obtenerConteoAgrupado(Connection con, String sql) throws SQLException {
+        Map<String, Integer> resultado = new LinkedHashMap<>();
+        try (PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String etiqueta = rs.getString(1);
+                int valor = rs.getInt(2);
+                resultado.put(etiqueta != null ? etiqueta : "N/A", valor);
+            }
+        }
+        return resultado;
     }
 }
