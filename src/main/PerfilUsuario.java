@@ -201,10 +201,18 @@ public class PerfilUsuario extends JPanel {
     // Bandera que indica si el perfil se encuentra actualmente en modo edición
     private boolean modoEdicionActivo = false;
 
+    // Referencia a la app para poder navegar desde los íconos de la barra superior
+    private final WorkBridgeApp app;
+
     //========================================================
     // CONSTRUCTOR
     //========================================================
     public PerfilUsuario() {
+        this(null);
+    }
+
+    public PerfilUsuario(WorkBridgeApp app) {
+        this.app = app;
         configurarVentana();
         construirMenuLateral();
         construirEncabezado();
@@ -465,8 +473,11 @@ public class PerfilUsuario extends JPanel {
 
         btnIconoNotificaciones = crearBotonIcono("\uD83D\uDD14", "Ver notificaciones");
         btnIconoPerfil = crearBotonIcono("\uD83D\uDC64", "Mi perfil");
-        btnIconoNotificaciones.addActionListener(e ->
-            mostrarMensajeInformativo("Notificaciones", "No tienes notificaciones nuevas por el momento."));
+        btnIconoNotificaciones.addActionListener(e -> {
+            if (app != null) app.irANotificaciones();
+        });
+        // El botón de perfil ya está en la pantalla de perfil; no necesita navegar.
+        btnIconoPerfil.setToolTipText("Ya estás en tu perfil");
 
         panelDerecho.add(btnBuscar);
         panelDerecho.add(campoBusquedaTrabajos);

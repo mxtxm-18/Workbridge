@@ -125,8 +125,20 @@ public class VerificacionEmpresas extends JPanel {
 
         JLabel campana = new JLabel("🔔");
         campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        campana.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        campana.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (app != null) app.irANotificaciones();
+            }
+        });
         JLabel perfil = new JLabel("👤");
         perfil.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        perfil.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        perfil.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (app != null) app.irAPerfil();
+            }
+        });
 
         der.add(buscador);
         der.add(campana);

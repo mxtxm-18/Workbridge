@@ -191,10 +191,12 @@ public class DashboardEmpresa extends JPanel {
 
         btnIconoNotificaciones = crearBotonIcono("\uD83D\uDD14", "Ver notificaciones");
         btnIconoPerfil = crearBotonIcono("\uD83D\uDC64", "Ir a mi perfil");
-        btnIconoNotificaciones.addActionListener(e -> mostrarMensajeInformativo("Notificaciones",
-            "Tienes notificaciones nuevas sobre tus vacantes y postulantes."));
-        btnIconoPerfil.addActionListener(e -> mostrarMensajeInformativo("Perfil",
-            "Accediendo al perfil de la empresa " + NOMBRE_EMPRESA_USUARIO + "."));
+        btnIconoNotificaciones.addActionListener(e -> {
+            if (app != null) app.irANotificaciones();
+        });
+        btnIconoPerfil.addActionListener(e -> {
+            if (app != null) app.irAPerfil();
+        });
 
         panelDerecho.add(lblTituloSeccion);
         panelDerecho.add(Box.createRigidArea(new Dimension(20, 0)));

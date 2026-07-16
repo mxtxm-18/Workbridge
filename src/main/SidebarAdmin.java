@@ -76,16 +76,10 @@ public class SidebarAdmin extends JPanel {
                     {"▤", "Publicaciones", "publicaciones", null},
                     {"⎙", "Documentos", "documentos", null},
                     {"✎", "Habilidades", "habilidades", null},
-                    {"◍", "Notificaciones", "notificaciones", null},
-            }));
-
-            add(crearNavGroup("PERFILES", new String[][]{
-                    {"☺", "Perfil Usuario", "perfilUsuario", null},
-                    {"◔", "Perfil Trabajador", "perfilTrabajador", null},
-                    {"⌂", "Gestión Empresa", "gestionEmpresa", null},
             }));
 
             add(crearNavGroup("PANELES", new String[][]{
+                    {"⌂", "Gestión Empresa", "gestionEmpresa", null},
                     {"⊡", "Dashboard Empresa", "dashboardEmpresa", null},
                     {"⊠", "Dashboard Moderador", "dashboardModerador", null},
                     {"↺", "Registro", "registro", null},
@@ -107,8 +101,6 @@ public class SidebarAdmin extends JPanel {
                     {"▤", "Publicaciones", "publicaciones", null},
                     {"⎙", "Documentos", "documentos", null},
                     {"✎", "Habilidades", "habilidades", null},
-                    {"◍", "Notificaciones", "notificaciones", null},
-                    {"☺", "Perfil Usuario", "perfilUsuario", null},
             }));
         }
 

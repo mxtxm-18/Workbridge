@@ -78,11 +78,23 @@ public class DashboardAdmin extends JPanel {
         JLabel campana = new JLabel("🔔");
         campana.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
         campana.setBounds(CONTENT_WIDTH - 260, 28, 36, 36);
+        campana.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        campana.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (app != null) app.irANotificaciones();
+            }
+        });
         top.add(campana);
 
         JLabel perfil = new JLabel("👤 Administrador");
         perfil.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         perfil.setBounds(CONTENT_WIDTH - 210, 30, 180, 26);
+        perfil.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        perfil.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (app != null) app.irAPerfil();
+            }
+        });
         top.add(perfil);
 
         return top;

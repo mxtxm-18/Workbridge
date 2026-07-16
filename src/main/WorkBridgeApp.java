@@ -48,7 +48,7 @@ public class WorkBridgeApp extends JFrame {
         screens.put("dashboardEmpresa", new DashboardEmpresa(this));
         screens.put("dashboardModerador", new DashboardModerador(this));
         screens.put("gestionEmpresa", new Gestion_Empresa(this));
-        screens.put("perfilUsuario", new PerfilUsuario());
+        screens.put("perfilUsuario", new PerfilUsuario(this));
 
         for (Map.Entry<String, Component> entry : screens.entrySet()) {
             mainPanel.add(entry.getValue(), entry.getKey());
@@ -73,6 +73,21 @@ public class WorkBridgeApp extends JFrame {
         }
     }
 
+    // Acceso rápido para el ícono de la campanita: lleva siempre a Notificaciones.
+    public void irANotificaciones() {
+        mostrarPantalla("notificaciones");
+    }
+
+    // Acceso rápido para el ícono de perfil: según el rol en sesión, lleva al
+    // perfil de empresa (reclutador) o al perfil de trabajador (resto de roles).
+    public void irAPerfil() {
+        if ("reclutador".equals(rolSesion)) {
+            mostrarPantalla("gestionEmpresa");
+        } else {
+            mostrarPantalla("perfilUsuario");
+        }
+    }
+
     public void iniciarSesion(String usuarioId, String rol) {
         this.usuarioIdSesion = usuarioId;
         this.rolSesion = rol;
@@ -89,7 +104,7 @@ public class WorkBridgeApp extends JFrame {
         reemplazarPantalla("habilidades", new GestionHabilidades(this));
         reemplazarPantalla("dashboardModerador", new DashboardModerador(this));
         reemplazarPantalla("gestionEmpresa", new Gestion_Empresa(this));
-        reemplazarPantalla("perfilUsuario", new PerfilUsuario());
+        reemplazarPantalla("perfilUsuario", new PerfilUsuario(this));
 
         switch (rol) {
             case "admin" -> mostrarPantalla("dashboardAdmin");
