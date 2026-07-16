@@ -1425,7 +1425,7 @@ public class PerfilUsuario extends JPanel {
     }
 
     private void manejarContactar() {
-        mostrarMensajeInformativo("Contactar", "Se ha enviado tu solicitud de contacto a " + NOMBRE_EMPRESA_SESION + ".");
+        mostrarMensajeInformativo("Contactar", "Se ha enviado tu solicitud de contacto a " + datoNombre + ".");
     }
 
     //========================================================
