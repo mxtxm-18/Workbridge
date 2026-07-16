@@ -185,18 +185,36 @@ public class Registro extends JPanel {
 
         String sql = "INSERT INTO usuarios (id, nombre, apellido, email, password_hash, telefono, rol) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection con = ConexionDB.getConexion();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+        try (Connection con = ConexionDB.getConexion()) {
 
             String nuevoId = UUID.randomUUID().toString();
-            ps.setString(1, nuevoId);
-            ps.setString(2, nombre);
-            ps.setString(3, apellido);
-            ps.setString(4, correo);
-            ps.setString(5, pass);           // ⚠ En producción usa hash (BCrypt)
-            ps.setString(6, telefono.isEmpty() ? null : telefono);
-            ps.setString(7, rol);
-            ps.executeUpdate();
+
+            try (PreparedStatement ps = con.prepareStatement(sql)) {
+                ps.setString(1, nuevoId);
+                ps.setString(2, nombre);
+                ps.setString(3, apellido);
+                ps.setString(4, correo);
+                ps.setString(5, pass);           // ⚠ En producción usa hash (BCrypt)
+                ps.setString(6, telefono.isEmpty() ? null : telefono);
+                ps.setString(7, rol);
+                ps.executeUpdate();
+            }
+
+            // Si se registró como "Empresa", crear automáticamente su fila en
+            // la tabla empresas, vinculada a este usuario (usuario_id).
+            // Así Gestion_Empresa siempre tiene una empresa que cargar/editar.
+            if ("reclutador".equals(rol)) {
+                String sqlEmpresa = "INSERT INTO empresas (id, usuario_id, nombre_empresa, correo_contacto, telefono) "
+                                   + "VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement psEmp = con.prepareStatement(sqlEmpresa)) {
+                    psEmp.setString(1, UUID.randomUUID().toString());
+                    psEmp.setString(2, nuevoId);
+                    psEmp.setString(3, nombre + " " + apellido); // nombre provisional, editable luego
+                    psEmp.setString(4, correo);
+                    psEmp.setString(5, telefono.isEmpty() ? null : telefono);
+                    psEmp.executeUpdate();
+                }
+            }
 
             JOptionPane.showMessageDialog(this, "¡Cuenta creada exitosamente!");
             app.iniciarSesion(nuevoId, rol);

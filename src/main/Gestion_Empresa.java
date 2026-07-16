@@ -36,6 +36,42 @@ public class Gestion_Empresa extends JPanel {
 
         add(new SidebarAdmin(app, "empresas"), BorderLayout.WEST);
         add(crearContenido(), BorderLayout.CENTER);
+
+        // Al construirse el panel (esto ocurre de nuevo cada vez que alguien
+        // inicia sesión, ver WorkBridgeApp.iniciarSesion), cargar automáticamente
+        // la empresa que pertenece al usuario en sesión, si existe.
+        cargarEmpresaDeSesion();
+    }
+
+    /**
+     * Busca la empresa asociada al usuario actualmente en sesión (usuarios.id ==
+     * empresas.usuario_id) y la carga en pantalla. Si todavía no hay sesión
+     * iniciada (por ejemplo, al arrancar la aplicación) no hace nada.
+     */
+    private void cargarEmpresaDeSesion() {
+        String usuarioId = app.getUsuarioIdSesion();
+        if (usuarioId == null) return;
+
+        String sql = "SELECT id FROM empresas WHERE usuario_id = ?";
+        try (Connection con = ConexionDB.getConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, usuarioId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    cargarEmpresaPorId(rs.getString("id"));
+                }
+                // Si no existe fila en empresas para este usuario (por ejemplo,
+                // cuentas creadas antes de este arreglo), simplemente se deja
+                // el panel en blanco; empresaIdActual queda null y "Editar"
+                // seguirá avisando que no hay empresa cargada, lo cual sigue
+                // siendo correcto en ese caso puntual.
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Error al buscar la empresa del usuario: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /** Llamar esto al navegar a la pantalla, pasando el id de la empresa a mostrar. */
