@@ -1,10 +1,10 @@
 package main;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.sql.*;
 import java.util.UUID;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class Registro extends JPanel {
 
@@ -17,7 +17,7 @@ public class Registro extends JPanel {
     private JTextField    tfNombre, tfApellido, tfCorreo, tfTelefono;
     private JPasswordField pfPass, pfPass2;
     private JToggleButton  btnTrabajador, btnEmpresa;
-
+    
     private final WorkBridgeApp app;
 
     public Registro(WorkBridgeApp app) {
@@ -188,13 +188,16 @@ public class Registro extends JPanel {
         try (Connection con = ConexionDB.getConexion()) {
 
             String nuevoId = UUID.randomUUID().toString();
-
+            String passwordHash = BCrypt.hashpw(
+                    pass,
+                    BCrypt.gensalt()
+            );
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 ps.setString(1, nuevoId);
                 ps.setString(2, nombre);
                 ps.setString(3, apellido);
                 ps.setString(4, correo);
-                ps.setString(5, pass);           // ⚠ En producción usa hash (BCrypt)
+                ps.setString(5, passwordHash);     // ⚠ En producción usa hash (BCrypt)
                 ps.setString(6, telefono.isEmpty() ? null : telefono);
                 ps.setString(7, rol);
                 ps.executeUpdate();

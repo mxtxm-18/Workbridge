@@ -3,7 +3,7 @@
 -- Descripción: Plataforma de empleo que conecta trabajadores
 --              con empresas reclutadoras.
 -- ============================================================
-
+drop database if exists workbridge_db;
 CREATE DATABASE workbridge_db;
 USE workbridge_db;
 
@@ -284,3 +284,219 @@ ALTER TABLE empresas
 
     INSERT INTO usuarios (id, nombre, apellido, email, password_hash, rol)
 VALUES (UUID(), 'Admin', 'Sistema', 'admin@workbridge.com', 'admin123', 'admin');
+
+
+
+
+-- =====================================================
+-- USUARIO TRABAJADOR
+-- =====================================================
+
+SET @trabajador = UUID();
+
+INSERT INTO usuarios
+(
+id,
+nombre,
+apellido,
+email,
+password_hash,
+rol
+)
+VALUES
+(
+@trabajador,
+'Juan',
+'Perez',
+'juan@workbridge.com',
+'123456',
+'trabajador'
+);
+
+-- =====================================================
+-- USUARIO RECLUTADOR
+-- =====================================================
+
+SET @reclutador = UUID();
+
+INSERT INTO usuarios
+(
+id,
+nombre,
+apellido,
+email,
+password_hash,
+rol
+)
+VALUES
+(
+@reclutador,
+'Maria',
+'Lopez',
+'maria@workbridge.com',
+'123456',
+'reclutador'
+);
+
+-- =====================================================
+-- EMPRESA
+-- =====================================================
+
+SET @empresa = UUID();
+
+INSERT INTO empresas
+(
+id,
+usuario_id,
+nombre_empresa,
+estado_verificacion
+)
+VALUES
+(
+@empresa,
+@reclutador,
+'TechCorp S.A.',
+'verificada'
+);
+
+-- =====================================================
+-- PERFIL
+-- =====================================================
+
+SET @perfil = UUID();
+
+INSERT INTO perfiles_trabajador
+(
+id,
+usuario_id,
+resumen,
+nivel_experiencia,
+modalidad_preferida,
+disponible
+)
+VALUES
+(
+@perfil,
+@trabajador,
+'Programador Java',
+'junior',
+'hibrido',
+1
+);
+
+-- =====================================================
+-- VACANTES
+-- =====================================================
+
+SET @vacante1 = UUID();
+SET @vacante2 = UUID();
+SET @vacante3 = UUID();
+SET @vacante4 = UUID();
+
+INSERT INTO vacantes
+(
+id,
+empresa_id,
+creado_por,
+titulo,
+descripcion,
+modalidad,
+nivel_experiencia,
+estado
+)
+VALUES
+
+(
+@vacante1,
+@empresa,
+@reclutador,
+'Desarrollador Java Junior',
+'Desarrollo Java',
+'hibrido',
+'junior',
+'activa'
+),
+
+(
+@vacante2,
+@empresa,
+@reclutador,
+'Diseñador UI',
+'Diseño de interfaces',
+'remoto',
+'junior',
+'activa'
+),
+
+(
+@vacante3,
+@empresa,
+@reclutador,
+'Administrador de Sistemas',
+'Administración',
+'presencial',
+'semi_senior',
+'activa'
+),
+
+(
+@vacante4,
+@empresa,
+@reclutador,
+'Analista de Datos',
+'Power BI',
+'hibrido',
+'junior',
+'activa'
+);
+
+-- =====================================================
+-- POSTULACIONES
+-- =====================================================
+
+INSERT INTO postulaciones
+(
+id,
+vacante_id,
+perfil_id,
+estado,
+carta_presentacion,
+postulado_en
+)
+VALUES
+
+(
+UUID(),
+@vacante1,
+@perfil,
+'en_revision',
+'Estoy interesado.',
+'2026-07-01 10:00:00'
+),
+
+(
+UUID(),
+@vacante2,
+@perfil,
+'aceptada',
+'Tengo experiencia.',
+'2026-07-03 09:30:00'
+),
+
+(
+UUID(),
+@vacante3,
+@perfil,
+'rechazada',
+'Adjunto CV.',
+'2026-07-05 14:15:00'
+),
+
+(
+UUID(),
+@vacante4,
+@perfil,
+'enviada',
+'Espero ser considerado.',
+'2026-07-06 08:45:00'
+);

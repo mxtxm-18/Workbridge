@@ -23,7 +23,7 @@ public class ConexionBD {
 
 
     private final String PASSWORD =
-            "admin";
+            "123456789";
 
 
 
